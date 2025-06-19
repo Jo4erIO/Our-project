@@ -1,13 +1,17 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Container from '../components/ui/Container';
+import { Helmet } from 'react-helmet-async';
+import Breadcrumbs from '../components/ui/Breadcrumbs';
 import { fetchProductById } from '../api/ProductsApi';
 import type { Product } from '../types/Product';
-import { FiArrowLeft, FiShoppingCart, FiHeart } from 'react-icons/fi';
+import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../store/cartSlice';
 import SimilarProducts from '../components/product/SimilarProducts';
+import { motion } from 'framer-motion';
+import { useMediaQuery } from 'react-responsive';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,13 +21,16 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [zoomActive, setZoomActive] = useState(false);
   const dispatch = useDispatch();
+  const isMobile = useMediaQuery({ maxWidth: 768 });
 
   useEffect(() => {
     const loadProduct = async () => {
       if (!id) return;
       try {
         setLoading(true);
+        setError(null);
         const data = await fetchProductById(id);
         setProduct(data);
         if (data.colors && data.colors.length > 0) {
@@ -40,19 +47,48 @@ export default function ProductPage() {
     loadProduct();
   }, [id]);
 
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    dispatch(addItem({
+      id: `${product.id}-${selectedColor}`,
+      name: `${product.name}${selectedColor ? ` (${selectedColor})` : ''}`,
+      price: product.discount 
+        ? Math.round(product.price * (1 - product.discount / 100))
+        : product.price,
+      quantity: 1
+    }));
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product?.name || 'Товар в TechShop',
+        text: `Посмотрите этот товар: ${product?.name}`,
+        url: window.location.href
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Ссылка скопирована в буфер обмена');
+    }
+  };
+
   if (loading) {
     return (
-      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
+      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+        <Breadcrumbs />
         <div className="animate-pulse">
-          <div className="h-6 w-40 bg-gray-200 rounded mb-6"></div>
+          <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="bg-gray-100 rounded-xl h-96"></div>
-            <div className="space-y-4">
-              <div className="h-10 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-              <div className="h-12 bg-gray-200 rounded"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl h-[500px]"></div>
+            <div className="space-y-6">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
           </div>
         </div>
@@ -62,9 +98,10 @@ export default function ProductPage() {
 
   if (error) {
     return (
-      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
+      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+        <Breadcrumbs />
         <div className="text-center py-12">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-xl mx-auto">
+          <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-6 py-4 rounded-lg max-w-xl mx-auto">
             <h3 className="font-bold text-lg mb-2">Ошибка!</h3>
             <p>{error}</p>
             <Link 
@@ -81,11 +118,12 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
+      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+        <Breadcrumbs />
         <div className="text-center py-12">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-xl mx-auto">
+          <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 max-w-xl mx-auto">
             <h3 className="text-xl font-semibold mb-4">Товар не найден</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               К сожалению, запрошенный товар отсутствует в нашем каталоге.
             </p>
             <Link 
@@ -100,183 +138,220 @@ export default function ProductPage() {
     );
   }
 
-  const handleAddToCart = () => {
-    dispatch(addItem({
-      id: `${product.id}-${selectedColor}`,
-      name: `${product.name} (${selectedColor})`,
-      price: product.price,
-      quantity: 1
-    }));
-  };
-
   return (
-    <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 min-h-screen">
-      <div className="mb-6">
-        <Link to="/" className="flex items-center text-indigo-600 hover:text-indigo-800">
-          <FiArrowLeft className="mr-2" />
-          Назад к каталогу
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Галерея изображений */}
-        <div>
-          <div className="bg-gray-100 rounded-xl p-4 mb-4 flex justify-center items-center h-[500px]">
-            {product.images && product.images.length > 0 ? (
-              <div 
-                className="bg-cover bg-center w-full h-full rounded-lg transition-all duration-300"
-                style={{ backgroundImage: `url(${product.images[selectedImage]})` }}
-              />
-            ) : (
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-full" />
-            )}
-          </div>
-          
-          {product.images && product.images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto py-2">
-              {product.images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 border-2 rounded-lg overflow-hidden w-24 h-24 transition-all ${
-                    selectedImage === index 
-                      ? 'border-indigo-500 scale-105' 
-                      : 'border-transparent hover:border-gray-300'
-                  }`}
-                >
-                  <div 
-                    className="bg-cover bg-center w-full h-full" 
-                    style={{ backgroundImage: `url(${img})` }}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+    <>
+      <Helmet>
+        <title>{product.name} - TechShop</title>
+        <meta name="description" content={product.description.substring(0, 160)} />
+      </Helmet>
+      
+      <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+        <Breadcrumbs />
         
-        {/* Информация о товаре */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          
-          <div className="flex items-center mb-6">
-            <div className="flex text-yellow-400 mr-4">
-              {'★'.repeat(Math.round(product.rating))}
-              {'☆'.repeat(5 - Math.round(product.rating))}
+        <div className="mb-6">
+          <Link to="/" className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+            <FiArrowLeft className="mr-2" />
+            Назад к каталогу
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
+          {/* Галерея изображений */}
+          <div className="relative">
+            <div 
+              className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 mb-4 flex justify-center items-center h-[500px] cursor-zoom-in"
+              onClick={() => !isMobile && setZoomActive(!zoomActive)}
+            >
+              {product.images && product.images.length > 0 ? (
+                <img 
+                  src={product.images[selectedImage]} 
+                  alt={product.name}
+                  className={`max-h-full max-w-full object-contain transition-all duration-300 ${
+                    zoomActive ? 'scale-150' : ''
+                  }`}
+                />
+              ) : (
+                <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-full h-full" />
+              )}
             </div>
-            <span className="text-gray-500">(124 отзыва)</span>
-          </div>
-
-          <div className="flex items-end mb-6">
-            {product.discount ? (
-              <>
-                <span className="text-4xl font-bold text-red-600 mr-3">
-                  {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} ₽
-                </span>
-                <span className="text-xl text-gray-500 line-through">
-                  {product.price.toLocaleString()} ₽
-                </span>
-                <span className="ml-3 bg-red-500 text-white text-sm font-bold px-2 py-1 rounded">
-                  -{product.discount}%
-                </span>
-              </>
-            ) : (
-              <span className="text-4xl font-bold text-gray-800">
-                {product.price.toLocaleString()} ₽
-              </span>
-            )}
-          </div>
-
-          {product.colors && product.colors.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-3">Цвет</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.colors.map(color => (
+            
+            {product.images && product.images.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto py-2 scrollbar-hide">
+                {product.images.map((img, index) => (
                   <button
-                    key={color}
-                    className={`px-4 py-2 border-2 rounded-full transition-all ${
-                      selectedColor === color 
-                        ? 'bg-indigo-100 border-indigo-500 font-medium' 
-                        : 'border-gray-300 hover:border-gray-500'
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`flex-shrink-0 border-2 rounded-lg overflow-hidden w-24 h-24 transition-all ${
+                      selectedImage === index 
+                        ? 'border-indigo-500 scale-105' 
+                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
-                    onClick={() => setSelectedColor(color)}
                   >
-                    {color}
+                    <img 
+                      src={img} 
+                      alt={`Вариант ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
-            </div>
-          )}
-
-          <div className="flex gap-4 mb-8">
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-indigo-600 text-white py-4 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg"
-            >
-              <FiShoppingCart className="mr-2" size={20} />
-              Добавить в корзину
-            </button>
-            <button 
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`p-4 border-2 rounded-lg transition-colors ${
-                isFavorite 
-                  ? 'bg-red-50 border-red-300 text-red-500' 
-                  : 'border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              <FiHeart size={24} className={isFavorite ? 'fill-current' : ''} />
-            </button>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4">Описание</h3>
-            <p className="text-gray-700 leading-relaxed">{product.description}</p>
-            {product.details && (
-              <p className="text-gray-700 mt-4 leading-relaxed">{product.details}</p>
             )}
           </div>
-
-          {product.features && product.features.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4">Ключевые особенности</h3>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {product.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="text-green-500 mr-2 mt-1">✓</span>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+          
+          {/* Информация о товаре */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="flex justify-between items-start mb-2">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{product.name}</h1>
+              <button 
+                onClick={handleShare}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <FiShare2 size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
             </div>
-          )}
-
-          {product.specifications && product.specifications.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4">Технические характеристики</h3>
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                {product.specifications.map((spec, index) => (
-                  <div key={index} className="mb-5 last:mb-0">
-                    <h4 className="font-medium text-lg text-gray-800 mb-3">{spec.title}</h4>
-                    <ul className="space-y-2">
-                      {spec.items.map((item, i) => (
-                        <li key={i} className="flex justify-between border-b border-gray-100 pb-2">
-                          <span className="text-gray-600">{item.split(':')[0]}:</span>
-                          <span className="font-medium">{item.split(':').slice(1).join(':').trim()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+            
+            <div className="flex items-center mb-6">
+              <div className="flex text-yellow-400 mr-4">
+                {'★'.repeat(Math.round(product.rating))}
+                {'☆'.repeat(5 - Math.round(product.rating))}
               </div>
+              <span className="text-gray-500 dark:text-gray-400">(124 отзыва)</span>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Похожие товары */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-6">Похожие товары</h2>
-        <SimilarProducts currentProductId={product.id} category={product.category} />
-      </div>
-    </Container>
+            <div className="flex items-end mb-6">
+              {product.discount ? (
+                <>
+                  <span className="text-4xl font-bold text-red-600 dark:text-red-500 mr-3">
+                    {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} ₽
+                  </span>
+                  <span className="text-xl text-gray-500 dark:text-gray-400 line-through">
+                    {product.price.toLocaleString()} ₽
+                  </span>
+                  <span className="ml-3 bg-red-500 text-white text-sm font-bold px-2 py-1 rounded">
+                    -{product.discount}%
+                  </span>
+                </>
+              ) : (
+                <span className="text-4xl font-bold text-gray-800 dark:text-gray-200">
+                  {product.price.toLocaleString()} ₽
+                </span>
+              )}
+            </div>
+
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Цвет</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map(color => (
+                    <button
+                      key={color}
+                      className={`px-4 py-2 border-2 rounded-full transition-all ${
+                        selectedColor === color 
+                          ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-500 font-medium' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400'
+                      }`}
+                      onClick={() => setSelectedColor(color)}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4 mb-8">
+              <motion.button
+                onClick={handleAddToCart}
+                className="flex-1 bg-indigo-600 text-white py-4 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FiShoppingCart className="mr-2" size={20} />
+                Добавить в корзину
+              </motion.button>
+              
+              <motion.button 
+                onClick={() => setIsFavorite(!isFavorite)}
+                className={`p-4 border-2 rounded-lg transition-colors ${
+                  isFavorite 
+                    ? 'bg-red-50 dark:bg-red-900 border-red-300 dark:border-red-700 text-red-500 shadow-inner' 
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiHeart size={24} className={isFavorite ? 'fill-current' : ''} />
+              </motion.button>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Описание</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{product.description}</p>
+              {product.details && (
+                <p className="text-gray-700 dark:text-gray-300 mt-4 leading-relaxed">{product.details}</p>
+              )}
+            </div>
+
+            {product.features && product.features.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Ключевые особенности</h3>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-green-500 mr-2 mt-1">✓</span>
+                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {product.specifications && product.specifications.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Технические характеристики</h3>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+                  {product.specifications.map((spec, index) => (
+                    <div key={index} className="mb-5 last:mb-0">
+                      <h4 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-3">{spec.title}</h4>
+                      <ul className="space-y-2">
+                        {spec.items.map((item, i) => {
+                          // Исправленный код для обработки характеристик
+                          const colonIndex = item.indexOf(':');
+                          const name = colonIndex !== -1 ? item.substring(0, colonIndex) : item;
+                          const value = colonIndex !== -1 ? item.substring(colonIndex + 1) : '';
+
+                          return (
+                            <li 
+                              key={i} 
+                              className="flex justify-between border-b border-gray-100 dark:border-gray-700 pb-2"
+                            >
+                              <span className="text-gray-600 dark:text-gray-400">
+                                {name.trim()}
+                              </span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200 text-right">
+                                {value.trim()}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Похожие товары */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Похожие товары</h2>
+          <SimilarProducts 
+            currentProductId={product.id} 
+            category={product.category} 
+          />
+        </div>
+      </Container>
+    </>
   );
 }

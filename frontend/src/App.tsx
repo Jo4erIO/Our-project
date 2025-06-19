@@ -1,30 +1,111 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { HelmetProvider } from 'react-helmet-async';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import ProductPage from './pages/ProductPage';
+import Container from './components/ui/Container';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import { ThemeProvider } from './context/ThemeContext';
+
+// Ленивая загрузка страниц
+const HomePage = lazy(() => import('./pages/HomePage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+// Компонент для автоматической прокрутки вверх
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
+// Анимация страниц
+const PageAnimation = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.3 }}
+  >
+    {children}
+  </motion.div>
+);
+
+function AppContent() {
+  const location = useLocation();
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
+      
+      <main className="flex-grow">
+        <ScrollToTop />
+        <Container className="py-4">
+          <Suspense fallback={
+            <div className="min-h-[50vh] flex items-center justify-center">
+              <LoadingSpinner size="lg" />
+            </div>
+          }>
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={
+                  <PageAnimation>
+                    <HomePage />
+                  </PageAnimation>
+                } />
+                <Route path="/cart" element={
+                  <PageAnimation>
+                    <CartPage />
+                  </PageAnimation>
+                } />
+                <Route path="/checkout" element={
+                  <PageAnimation>
+                    <CheckoutPage />
+                  </PageAnimation>
+                } />
+                <Route path="/product/:id" element={
+                  <PageAnimation>
+                    <ProductPage />
+                  </PageAnimation>
+                } />
+                <Route path="/category/:categoryId" element={
+                  <PageAnimation>
+                    <CategoryPage />
+                  </PageAnimation>
+                } />
+                <Route path="*" element={
+                  <PageAnimation>
+                    <NotFoundPage />
+                  </PageAnimation>
+                } />
+              </Routes>
+            </AnimatePresence>
+          </Suspense>
+        </Container>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            {/* Добавляем новый маршрут */}
-            <Route path="/product/:id" element={<ProductPage />} />
-          </Routes>
-        </main>
-        
-        <Footer />
-      </div>
-    </Router>
+    <HelmetProvider>
+      <ThemeProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

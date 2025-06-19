@@ -9,7 +9,10 @@ export interface Product {
   discount?: number;
   stock?: number;
   features?: string[]; 
-  colors?: string[];
+  colors?: string[]; // Добавлены цвета
   details?: string;
-  specifications?: { title: string; items: string[] }[];
+  specifications?: { 
+    title: string; 
+    items: string[] 
+  }[];
 }
