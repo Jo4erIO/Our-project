@@ -20,7 +20,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+    <header className="header sticky top-0 z-50">
       <Container className="py-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center w-full md:w-auto justify-between">

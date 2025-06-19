@@ -31,7 +31,7 @@ export default function CategoryPage() {
   }, [categoryId]);
 
   return (
-    <Container className="py-8 min-h-screen bg-gray-900 text-white">
+    <Container className="py-8 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <Link to="/" className="flex items-center text-indigo-400 hover:text-white">
           <span className="mr-2">←</span>

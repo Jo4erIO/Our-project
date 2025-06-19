@@ -1,35 +1,35 @@
-import Container from '../components/ui/Container';
+
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 
 export default function CheckoutPage() {
   return (
-    <Container className="py-8">
+    <div className="checkout-container">
       <div className="mb-6">
-        <Link to="/cart" className="flex items-center text-indigo-600 hover:text-indigo-800">
+        <Link to="/cart" className="back-link">
           <FiArrowLeft className="mr-2" />
           Назад в корзину
         </Link>
       </div>
       
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Оформление заказа</h1>
+        <h1 className="checkout-title">Оформление заказа</h1>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-24 h-24 mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold mb-2">Раздел в разработке</h2>
-          <p className="text-gray-600 mb-6">
+        <div className="development-notice">
+          <div className="development-icon"></div>
+          <h2>Раздел в разработке</h2>
+          <p>
             Страница оформления заказа находится в разработке. 
             Скоро здесь можно будет оформить заказ!
           </p>
           <Link 
             to="/" 
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg inline-flex items-center justify-center hover:bg-indigo-700 transition-colors"
+            className="home-link"
           >
             Вернуться на главную
           </Link>
         </div>
       </div>
-    </Container>
+    </div>
   );
 }
