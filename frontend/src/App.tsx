@@ -8,6 +8,7 @@ import Container from '@/components/ui/Container';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ThemeProvider } from '@/context/ThemeContext';
 import '@/index.css';
+import { DeviceProvider } from '@/context/DeviceContext';
 
 // Ленивая загрузка страниц
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -20,11 +21,9 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 // Компонент для автоматической прокрутки вверх
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return null;
 };
 
@@ -44,6 +43,7 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
+        <DeviceProvider>
         <Router>
           <div className="flex flex-col min-h-screen">
             <Header />
@@ -97,6 +97,7 @@ function App() {
             <Footer />
           </div>
         </Router>
+      </DeviceProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

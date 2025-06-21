@@ -47,7 +47,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         price: product.discount 
           ? Math.round(product.price * (1 - product.discount / 100))
           : product.price,
-        quantity: 1
+        quantity: 1,
+        image: product.images[0] // Добавлено изображение
       })
     );
   };

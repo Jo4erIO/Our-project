@@ -1,4 +1,5 @@
-import { FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useState } from 'react';
+import { FiMinus, FiPlus, FiTrash2, FiImage } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { removeItem, updateQuantity } from '../../store/cartSlice';
 import type { CartItem } from '../../store/cartSlice';
@@ -9,11 +10,23 @@ interface Props {
 
 export default function CartItem({ item }: Props) {
   const dispatch = useDispatch();
+  const [imageError, setImageError] = useState(false);
 
   return (
     <div className="flex items-center border-b py-4">
-      <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+      <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+        {item.image && !imageError ? (
+          <img 
+            src={item.image} 
+            alt={item.name}
+            className="w-full h-full object-contain p-1"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="bg-gray-200 rounded-xl w-16 h-16 flex items-center justify-center">
+            <FiImage size={24} className="text-gray-400" />
+          </div>
+        )}
       </div>
       
       <div className="ml-4 flex-grow">

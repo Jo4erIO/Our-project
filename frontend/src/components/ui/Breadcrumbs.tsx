@@ -22,12 +22,6 @@ export default function Breadcrumbs() {
   return (
     <nav className="mb-6 text-sm" aria-label="Хлебные крошки">
       <ol className="flex items-center flex-wrap">
-        <li>
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
-            Главная
-          </Link>
-        </li>
-        
         {breadcrumbs.map((crumb, index) => (
           <li key={crumb.path} className="flex items-center">
             <FiChevronRight className="mx-2 text-gray-400" size={14} />

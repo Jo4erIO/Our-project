@@ -5,7 +5,8 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  color?: string; // Добавлено поле для цвета
+  image: string; // Добавлено поле для изображения
+  color?: string;
 }
 
 interface CartState {

@@ -1,9 +1,10 @@
-
+import Container from '../components/ui/Container';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 
 export default function CheckoutPage() {
   return (
+    <Container>
     <div className="checkout-container">
       <div className="mb-6">
         <Link to="/cart" className="back-link">
@@ -31,5 +32,6 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+      </Container>
   );
 }

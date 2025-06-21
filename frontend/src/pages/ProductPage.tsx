@@ -5,13 +5,12 @@ import { Helmet } from 'react-helmet-async';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import { fetchProductById } from '../api/ProductsApi';
 import type { Product } from '../types/Product';
-import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addItem } from '../store/cartSlice';
 import SimilarProducts from '../components/product/SimilarProducts';
 import { motion } from 'framer-motion';
-import { useMediaQuery } from 'react-responsive';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,10 +20,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [zoomActive, setZoomActive] = useState(false);
-  const [showThumbnails, setShowThumbnails] = useState(false);
   const dispatch = useDispatch();
-  const isMobile = useMediaQuery({ maxWidth: 768 });
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -57,7 +53,8 @@ export default function ProductPage() {
       price: product.discount 
         ? Math.round(product.price * (1 - product.discount / 100))
         : product.price,
-      quantity: 1
+      quantity: 1,
+      image: product.images[0]
     }));
   };
 
@@ -72,16 +69,6 @@ export default function ProductPage() {
       navigator.clipboard.writeText(window.location.href);
       alert('Ссылка скопирована в буфер обмена');
     }
-  };
-
-  const nextImage = () => {
-    if (!product?.images) return;
-    setSelectedImage(prev => (prev + 1) % product.images.length);
-  };
-
-  const prevImage = () => {
-    if (!product?.images) return;
-    setSelectedImage(prev => (prev - 1 + product.images.length) % product.images.length);
   };
 
   if (loading) {
@@ -167,113 +154,34 @@ export default function ProductPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
-          {/* Галерея изображений */}
-          <div className="relative">
-            <div 
-              className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 mb-4 flex justify-center items-center h-[500px] cursor-zoom-in relative"
-              onClick={() => !isMobile && setZoomActive(!zoomActive)}
-            >
-              {product.images && product.images.length > 0 ? (
-                <img 
-                  src={product.images[selectedImage]} 
-                  alt={product.name}
-                  className={`max-h-full max-w-full object-contain transition-all duration-300 ${
-                    zoomActive ? 'scale-150' : ''
-                  }`}
-                />
-              ) : (
-                <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-full h-full" />
-              )}
-              
-              {/* Навигация по изображениям */}
-              {product.images && product.images.length > 1 && (
-                <>
-                  <button 
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 rounded-full p-2 shadow-md z-10 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      prevImage();
-                    }}
-                  >
-                    <FiChevronLeft size={24} />
-                  </button>
-                  <button 
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 hover:bg-white dark:hover:bg-gray-600 rounded-full p-2 shadow-md z-10 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      nextImage();
-                    }}
-                  >
-                    <FiChevronRight size={24} />
-                  </button>
-                  
-                  {/* Индикатор текущего изображения */}
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-                    {product.images.map((_, index) => (
-                      <div 
-                        key={index}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          index === selectedImage 
-                            ? 'bg-indigo-600 dark:bg-indigo-400' 
-                            : 'bg-gray-300 dark:bg-gray-600'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
+          {/* Галерея изображений с миниатюрами */}
+          <div>
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-8 flex justify-center items-center mb-4">
+              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-96 flex items-center justify-center">
+                {product.images?.[selectedImage] && (
+                  <img 
+                    src={product.images[selectedImage]} 
+                    alt={product.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                )}
+              </div>
             </div>
             
-            {/* Кнопка для показа миниатюр */}
+            {/* Панель миниатюр */}
             {product.images && product.images.length > 1 && (
-              <button
-                className="text-indigo-600 dark:text-indigo-400 flex items-center justify-center w-full py-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                onClick={() => setShowThumbnails(true)}
-              >
-                Показать все изображения ({product.images.length})
-              </button>
-            )}
-            
-            {/* Модальное окно с миниатюрами */}
-            {showThumbnails && (
-              <div className="fixed inset-0 bg-black/70 dark:bg-black/80 z-50 flex items-center justify-center p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                  <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-xl font-semibold">Все изображения</h3>
-                    <button 
-                      onClick={() => setShowThumbnails(false)}
-                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <FiX size={24} />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[80vh]">
-                    {product.images.map((img, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedImage(index);
-                          setShowThumbnails(false);
-                        }}
-                        className={`border-2 rounded-lg overflow-hidden transition-all ${
-                          selectedImage === index 
-                            ? 'border-indigo-500' 
-                            : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
-                      >
-                        <img 
-                          src={img} 
-                          alt={`Вариант ${index + 1}`}
-                          className="w-full h-32 object-contain"
-                        />
-                        <div className="p-2 text-center text-sm">
-                          Изображение {index + 1}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="flex gap-2 overflow-x-auto py-2">
+                {product.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all ${
+                      selectedImage === index ? 'border-indigo-500 scale-105' : 'border-transparent'
+                    }`}
+                  >
+                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -395,7 +303,6 @@ export default function ProductPage() {
                       <h4 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-3">{spec.title}</h4>
                       <ul className="space-y-2">
                         {spec.items.map((item, i) => {
-                          // Исправленный код для обработки характеристик
                           const colonIndex = item.indexOf(':');
                           const name = colonIndex !== -1 ? item.substring(0, colonIndex) : item;
                           const value = colonIndex !== -1 ? item.substring(colonIndex + 1) : '';
