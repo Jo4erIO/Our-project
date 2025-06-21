@@ -16,7 +16,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [deviceType, setDeviceType] = useState<DeviceType>(() => {
     // Проверяем localStorage при инициализации
     const savedDeviceType = localStorage.getItem('deviceType') as DeviceType | null;
-    return savedDeviceType || 'desktop';
+    return savedDeviceType || (window.innerWidth < 768 ? 'mobile' : 'desktop');
   });
 
   useEffect(() => {
@@ -38,6 +38,7 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useDevice = () => {
   const context = useContext(DeviceContext);
   if (!context) {

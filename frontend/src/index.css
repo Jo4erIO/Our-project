@@ -636,8 +636,26 @@ body {
   border-radius: 50%;
   border: 2px solid var(--border-color);
   cursor: pointer;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px rgb(79 70 229);
+  z-index: 10;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Анимация для переключения */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+/* Улучшенные стили для выбранного цвета на странице товара */
+.color-selected {
+  position: relative;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px rgb(79 70 229) !important;
+  transform: scale(1.05);
+  z-index: 10;
+  animation: pulse 1s ease;
 }
 
 .color-option:hover {
@@ -649,6 +667,7 @@ body {
   border-color: var(--primary-color);
   transform: scale(1.15);
   box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--primary-color);
+  animation: pulse 1s ease;
 }
 
 
@@ -1043,6 +1062,15 @@ img {
   opacity: 1;
 }
 
+/* Для мобильной версии */
+@media (max-width: 768px) {
+  .image-nav-button {
+    opacity: 1;
+    width: 28px;
+    height: 28px;
+  }
+}
+
 /* Заглушки для изображений */
 .image-placeholder {
   display: flex;
@@ -1155,18 +1183,17 @@ img {
 
 .cart-badge {
   position: absolute;
-  top: -0.25rem;
-  right: -0.25rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  font-size: 0.75rem;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   background-color: #ef4444;
   color: white;
-  border-radius: 9999px;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: bounce 1s infinite;
 }
 
 /* Адаптивные стили для поиска */
@@ -1349,3 +1376,26 @@ body.panel-open main {
   transform: none;
 }
 
+/* Добавьте в конец файла */
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Для ограничения текста в 2 строки */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

@@ -1,15 +1,15 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import Container from '../components/ui/Container';
+import Container from '@/components/ui/Container';
 import { Helmet } from 'react-helmet-async';
-import Breadcrumbs from '../components/ui/Breadcrumbs';
-import { fetchProductById } from '../api/ProductsApi';
-import type { Product } from '../types/Product';
-import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2 } from 'react-icons/fi';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import { fetchProductById } from '@/api/ProductsApi';
+import type { Product } from '@/types/Product';
+import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { addItem } from '../store/cartSlice';
-import SimilarProducts from '../components/product/SimilarProducts';
+import { addItem } from '@/store/cartSlice';
+import SimilarProducts from '@/components/product/SimilarProducts';
 import { motion } from 'framer-motion';
 
 export default function ProductPage() {
@@ -40,7 +40,6 @@ export default function ProductPage() {
         setLoading(false);
       }
     };
-
     loadProduct();
   }, [id]);
 
@@ -50,7 +49,7 @@ export default function ProductPage() {
     dispatch(addItem({
       id: `${product.id}-${selectedColor}`,
       name: `${product.name}${selectedColor ? ` (${selectedColor})` : ''}`,
-      price: product.discount 
+      price: product.discount
         ? Math.round(product.price * (1 - product.discount / 100))
         : product.price,
       quantity: 1,
@@ -69,6 +68,34 @@ export default function ProductPage() {
       navigator.clipboard.writeText(window.location.href);
       alert('Ссылка скопирована в буфер обмена');
     }
+  };
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (product?.images && product.images.length > 0) {
+      setSelectedImage(prevIndex => 
+        (prevIndex + 1) % product.images.length
+      );
+    }
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (product?.images && product.images.length > 0) {
+      setSelectedImage(prevIndex => 
+        (prevIndex - 1 + product.images.length) % product.images.length
+      );
+    }
+  };
+
+  // Функция для определения светлый ли цвет
+  const isLightColor = (hexColor: string): boolean => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128;
   };
 
   if (loading) {
@@ -102,8 +129,8 @@ export default function ProductPage() {
           <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-6 py-4 rounded-lg max-w-xl mx-auto">
             <h3 className="font-bold text-lg mb-2">Ошибка!</h3>
             <p>{error}</p>
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="mt-4 inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               На главную
@@ -124,8 +151,8 @@ export default function ProductPage() {
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               К сожалению, запрошенный товар отсутствует в нашем каталоге.
             </p>
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="bg-indigo-600 text-white px-6 py-3 rounded-lg inline-flex items-center hover:bg-indigo-700 transition-colors"
             >
               Вернуться в каталог
@@ -152,25 +179,60 @@ export default function ProductPage() {
             Назад к каталогу
           </Link>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
           {/* Галерея изображений с миниатюрами */}
-          <div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-8 flex justify-center items-center mb-4">
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full h-96 flex items-center justify-center">
-                {product.images?.[selectedImage] && (
-                  <img 
-                    src={product.images[selectedImage]} 
+          <div className="relative">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-8 flex justify-center items-center mb-4 relative product-image-container">
+              {product.images?.[selectedImage] ? (
+                <>
+                  <img
+                    src={product.images[selectedImage]}
                     alt={product.name}
                     className="max-h-full max-w-full object-contain"
                   />
-                )}
-              </div>
+                  
+                  {/* Стрелки переключения */}
+                  {product.images.length > 1 && (
+                    <>
+                      <button
+                        className="image-nav-button left-2"
+                        onClick={prevImage}
+                      >
+                        <FiChevronLeft size={24} />
+                      </button>
+                      <button
+                        className="image-nav-button right-2"
+                        onClick={nextImage}
+                      >
+                        <FiChevronRight size={24} />
+                      </button>
+                      
+                      {/* Индикаторы изображений */}
+                      <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-1.5 z-10">
+                        {product.images.map((_, index) => (
+                          <div
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              index === selectedImage
+                                ? 'bg-white w-4'
+                                : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                  <span>No Image</span>
+                </div>
+              )}
             </div>
             
             {/* Панель миниатюр */}
             {product.images && product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto py-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
                 {product.images.map((img, index) => (
                   <button
                     key={index}
@@ -190,7 +252,7 @@ export default function ProductPage() {
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="flex justify-between items-start mb-2">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{product.name}</h1>
-              <button 
+              <button
                 onClick={handleShare}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
               >
@@ -205,7 +267,6 @@ export default function ProductPage() {
               </div>
               <span className="text-gray-500 dark:text-gray-400">(124 отзыва)</span>
             </div>
-
             <div className="flex items-end mb-6">
               {product.discount ? (
                 <>
@@ -225,19 +286,31 @@ export default function ProductPage() {
                 </span>
               )}
             </div>
-
+            
             {product.colors && product.colors.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Цвет</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                  Цвет: <span className="font-normal">{selectedColor}</span>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {product.colors.map(color => (
                     <button
                       key={color}
                       className={`px-4 py-2 border-2 rounded-full transition-all ${
-                        selectedColor === color 
-                          ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-500 font-medium' 
+                        selectedColor === color
+                          ? 'border-indigo-600 shadow-lg font-medium scale-105'
                           : 'border-gray-300 dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400'
                       }`}
+                      style={{
+                        backgroundColor: getColorHex(color),
+                        color: isLightColor(getColorHex(color)) ? '#000' : '#fff',
+                        boxShadow: selectedColor === color 
+                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)' 
+                          : 'none',
+                        animation: selectedColor === color 
+                          ? 'pulse 1s ease' 
+                          : 'none'
+                      }}
                       onClick={() => setSelectedColor(color)}
                     >
                       {color}
@@ -246,7 +319,7 @@ export default function ProductPage() {
                 </div>
               </div>
             )}
-
+            
             <div className="flex gap-4 mb-8">
               <motion.button
                 onClick={handleAddToCart}
@@ -258,11 +331,11 @@ export default function ProductPage() {
                 Добавить в корзину
               </motion.button>
               
-              <motion.button 
+              <motion.button
                 onClick={() => setIsFavorite(!isFavorite)}
                 className={`p-4 border-2 rounded-lg transition-colors ${
-                  isFavorite 
-                    ? 'bg-red-50 dark:bg-red-900 border-red-300 dark:border-red-700 text-red-500 shadow-inner' 
+                  isFavorite
+                    ? 'bg-red-50 dark:bg-red-900 border-red-300 dark:border-red-700 text-red-500 shadow-inner'
                     : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
                 whileHover={{ scale: 1.05 }}
@@ -271,7 +344,7 @@ export default function ProductPage() {
                 <FiHeart size={24} className={isFavorite ? 'fill-current' : ''} />
               </motion.button>
             </div>
-
+            
             <div className="mb-8">
               <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Описание</h3>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{product.description}</p>
@@ -279,7 +352,7 @@ export default function ProductPage() {
                 <p className="text-gray-700 dark:text-gray-300 mt-4 leading-relaxed">{product.details}</p>
               )}
             </div>
-
+            
             {product.features && product.features.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Ключевые особенности</h3>
@@ -293,7 +366,7 @@ export default function ProductPage() {
                 </ul>
               </div>
             )}
-
+            
             {product.specifications && product.specifications.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Технические характеристики</h3>
@@ -306,10 +379,9 @@ export default function ProductPage() {
                           const colonIndex = item.indexOf(':');
                           const name = colonIndex !== -1 ? item.substring(0, colonIndex) : item;
                           const value = colonIndex !== -1 ? item.substring(colonIndex + 1) : '';
-
                           return (
-                            <li 
-                              key={i} 
+                            <li
+                              key={i}
                               className="flex justify-between border-b border-gray-100 dark:border-gray-700 pb-2"
                             >
                               <span className="text-gray-600 dark:text-gray-400">
@@ -329,16 +401,53 @@ export default function ProductPage() {
             )}
           </div>
         </div>
-
+        
         {/* Похожие товары */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Похожие товары</h2>
-          <SimilarProducts 
-            currentProductId={product.id} 
-            category={product.category} 
+          <SimilarProducts
+            currentProductId={product.id}
+            category={product.category}
           />
         </div>
       </Container>
     </>
   );
+}
+
+// Вспомогательная функция для преобразования названий цветов в HEX
+function getColorHex(colorName: string): string {
+  const colorMap: Record<string, string> = {
+    'черный': '#000000',
+    'чёрный': '#000000',
+    'белый': '#FFFFFF',
+    'серебристый': '#C0C0C0',
+    'серебро': '#C0C0C0',
+    'золотой': '#FFD700',
+    'золото': '#FFD700',
+    'синий': '#0000FF',
+    'голубой': '#00BFFF',
+    'красный': '#FF0000',
+    'розовый': '#FFC0CB',
+    'зеленый': '#008000',
+    'зелёный': '#008000',
+    'фиолетовый': '#800080',
+    'оранжевый': '#FFA500',
+    'желтый': '#FFFF00',
+    'жёлтый': '#FFFF00',
+    'серый': '#808080',
+    'бежевый': '#F5F5DC',
+    'коричневый': '#A52A2A',
+    'бирюзовый': '#40E0D0',
+    'бордовый': '#800000',
+    'салатовый': '#7FFF00',
+    'сиреневый': '#C8A2C8',
+    'хаки': '#C3B091',
+    'прозрачный': 'transparent',
+    'midnight': '#191970',
+    'starlight': '#E5E4E2',
+    'product red': '#E60026',
+    'серый космос': '#4C5866'
+  };
+  return colorMap[colorName.toLowerCase()] || '#CCCCCC';
 }
