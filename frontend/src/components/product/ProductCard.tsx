@@ -5,13 +5,15 @@ import { useDispatch } from 'react-redux';
 import { addItem } from '@/store/cartSlice';
 import type { Product } from '@/types/Product';
 import { useDevice } from '@/context/DeviceContext';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
+import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
   const [selectedColor, setSelectedColor] = useState(
     product.colors && product.colors.length > 0 ? product.colors[0] : ''
   );
@@ -22,6 +24,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const intervalRef = useRef<number | null>(null);
   const { isMobile } = useDevice();
   
+  // Wishlist state
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const isFavorite = wishlistItems.some(item => item.id === product.id);
+
   // Состояния для обработки свайпа
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -36,7 +42,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         );
       }, 1500000);
     }
-
     return () => {
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
@@ -57,6 +62,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         image: product.images[0]
       })
     );
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isFavorite) {
+      dispatch(removeFromWishlist(product.id));
+    } else {
+      dispatch(addToWishlist(product));
+    }
   };
 
   const nextImage = (e: React.MouseEvent) => {
@@ -111,7 +125,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       >
         <div className="relative">
           {/* Изображение товара с поддержкой свайпа */}
-          <div 
+          <div
             ref={imageRef}
             className="h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative overflow-hidden touch-pan-x"
             onTouchStart={handleTouchStart}
@@ -147,7 +161,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </div>
             )}
           </div>
-          
+        
           {/* Информация о товаре */}
           <div className="p-3">
             <h3 className="font-medium line-clamp-2 h-12">{product.name}</h3>
@@ -170,10 +184,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </div>
               <button
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsFavorite(!isFavorite);
-                }}
+                onClick={handleWishlistToggle}
               >
                 <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} />
               </button>
@@ -187,14 +198,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <div
                       key={color}
                       className={`w-5 h-5 rounded-full border-2 transition-all ${
-                        selectedColor === color 
-                          ? 'border-indigo-600 shadow-lg scale-110' 
+                        selectedColor === color
+                          ? 'border-indigo-600 shadow-lg scale-110'
                           : 'border-gray-300 dark:border-gray-600'
                       }`}
-                      style={{ 
+                      style={{
                         backgroundColor: getColorHex(color),
-                        boxShadow: selectedColor === color 
-                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)' 
+                        boxShadow: selectedColor === color
+                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)'
                           : 'none'
                       }}
                       onClick={(e) => {
@@ -227,10 +238,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="relative">
         <button
           className="absolute top-3 right-3 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsFavorite(!isFavorite);
-          }}
+          onClick={handleWishlistToggle}
         >
           <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} size={18} />
         </button>
@@ -260,7 +268,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   >
                     <FiChevronRight size={20} />
                   </button>
-                  
+                
                   {/* Индикаторы изображений */}
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center space-x-1.5 z-10">
                     {product.images.map((_, index) => (
@@ -325,17 +333,17 @@ export default function ProductCard({ product }: ProductCardProps) {
                   <div
                     key={color}
                     className={`w-5 h-5 rounded-full border-2 transition-all cursor-pointer ${
-                      selectedColor === color 
-                        ? 'border-indigo-600 shadow-lg scale-110' 
+                      selectedColor === color
+                        ? 'border-indigo-600 shadow-lg scale-110'
                         : 'border-gray-300 dark:border-gray-600'
                     }`}
-                    style={{ 
+                    style={{
                       backgroundColor: getColorHex(color),
-                      boxShadow: selectedColor === color 
-                        ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)' 
+                      boxShadow: selectedColor === color
+                        ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)'
                         : 'none',
-                      animation: selectedColor === color 
-                        ? 'pulse 1s ease' 
+                      animation: selectedColor === color
+                        ? 'pulse 1s ease'
                         : 'none'
                     }}
                     onClick={(e) => {
@@ -395,5 +403,6 @@ function getColorHex(colorName: string): string {
     'product red': '#E60026',
     'серый космос': '#4C5866'
   };
+
   return colorMap[colorName.toLowerCase()] || '#CCCCCC';
 }

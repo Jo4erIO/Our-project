@@ -15,10 +15,12 @@ export default function Header() {
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { isMobile } = useDevice();
-  const { items } = useSelector((state: RootState) => state.cart);
-  
+  const { items: cartItems } = useSelector((state: RootState) => state.cart);
+  const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist);
+
   // Вычисляем общее количество товаров в корзине
-  const cartItemsCount = items.reduce((total, item) => total + item.quantity, 0);
+  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const wishlistItemsCount = wishlistItems.length;
 
   return (
     <header className="header sticky top-0 z-50 min-h-[60px] bg-white dark:bg-gray-900 shadow-sm">
@@ -54,6 +56,9 @@ export default function Header() {
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                 >
                   <FiHeart size={20} />
+                  {wishlistItemsCount > 0 && (
+                    <span className="cart-badge">{wishlistItemsCount}</span>
+                  )}
                 </Link>
                 
                 <Link
@@ -62,9 +67,7 @@ export default function Header() {
                 >
                   <FiShoppingCart size={20} />
                   {cartItemsCount > 0 && (
-                    <span className="cart-badge">
-                      {cartItemsCount}
-                    </span>
+                    <span className="cart-badge">{cartItemsCount}</span>
                   )}
                 </Link>
                 
@@ -98,6 +101,9 @@ export default function Header() {
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                 >
                   <FiHeart size={24} />
+                  {wishlistItemsCount > 0 && (
+                    <span className="cart-badge">{wishlistItemsCount}</span>
+                  )}
                 </Link>
                 
                 <Link
@@ -106,9 +112,7 @@ export default function Header() {
                 >
                   <FiShoppingCart size={24} />
                   {cartItemsCount > 0 && (
-                    <span className="cart-badge">
-                      {cartItemsCount}
-                    </span>
+                    <span className="cart-badge">{cartItemsCount}</span>
                   )}
                 </Link>
                 

@@ -11,6 +11,9 @@ import { useDispatch } from 'react-redux';
 import { addItem } from '@/store/cartSlice';
 import SimilarProducts from '@/components/product/SimilarProducts';
 import { motion } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
+import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,8 +22,11 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   const dispatch = useDispatch();
+  
+  // Wishlist state
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const isFavorite = wishlistItems.some(item => item.id === product?.id);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -57,6 +63,16 @@ export default function ProductPage() {
     }));
   };
 
+  const handleWishlistToggle = () => {
+    if (product) {
+      if (isFavorite) {
+        dispatch(removeFromWishlist(product.id));
+      } else {
+        dispatch(addToWishlist(product));
+      }
+    }
+  };
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -73,7 +89,7 @@ export default function ProductPage() {
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     if (product?.images && product.images.length > 0) {
-      setSelectedImage(prevIndex => 
+      setSelectedImage(prevIndex =>
         (prevIndex + 1) % product.images.length
       );
     }
@@ -82,7 +98,7 @@ export default function ProductPage() {
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     if (product?.images && product.images.length > 0) {
-      setSelectedImage(prevIndex => 
+      setSelectedImage(prevIndex =>
         (prevIndex - 1 + product.images.length) % product.images.length
       );
     }
@@ -167,7 +183,8 @@ export default function ProductPage() {
     <>
       <Helmet>
         <title>{product.name} - TechShop</title>
-        <meta name="description" content={product.description.substring(0, 160)} />
+        <meta name="description"
+        content={product.description.substring(0, 160)} />
       </Helmet>
       
       <Container className="py-8 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
@@ -190,7 +207,7 @@ export default function ProductPage() {
                     alt={product.name}
                     className="max-h-full max-w-full object-contain"
                   />
-                  
+                
                   {/* Стрелки переключения */}
                   {product.images.length > 1 && (
                     <>
@@ -206,7 +223,7 @@ export default function ProductPage() {
                       >
                         <FiChevronRight size={24} />
                       </button>
-                      
+                    
                       {/* Индикаторы изображений */}
                       <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-1.5 z-10">
                         {product.images.map((_, index) => (
@@ -247,7 +264,7 @@ export default function ProductPage() {
               </div>
             )}
           </div>
-          
+        
           {/* Информация о товаре */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="flex justify-between items-start mb-2">
@@ -304,11 +321,11 @@ export default function ProductPage() {
                       style={{
                         backgroundColor: getColorHex(color),
                         color: isLightColor(getColorHex(color)) ? '#000' : '#fff',
-                        boxShadow: selectedColor === color 
-                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)' 
+                        boxShadow: selectedColor === color
+                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)'
                           : 'none',
-                        animation: selectedColor === color 
-                          ? 'pulse 1s ease' 
+                        animation: selectedColor === color
+                          ? 'pulse 1s ease'
                           : 'none'
                       }}
                       onClick={() => setSelectedColor(color)}
@@ -332,7 +349,7 @@ export default function ProductPage() {
               </motion.button>
               
               <motion.button
-                onClick={() => setIsFavorite(!isFavorite)}
+                onClick={handleWishlistToggle}
                 className={`p-4 border-2 rounded-lg transition-colors ${
                   isFavorite
                     ? 'bg-red-50 dark:bg-red-900 border-red-300 dark:border-red-700 text-red-500 shadow-inner'
@@ -449,5 +466,6 @@ function getColorHex(colorName: string): string {
     'product red': '#E60026',
     'серый космос': '#4C5866'
   };
+
   return colorMap[colorName.toLowerCase()] || '#CCCCCC';
 }
