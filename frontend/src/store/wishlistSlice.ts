@@ -5,16 +5,19 @@ interface WishlistState {
   items: Product[];
 }
 
-const getInitialWishlist = (): Product[] => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('techshop_wishlist');
-    return saved ? JSON.parse(saved) : [];
+// Функция для загрузки состояния из localStorage
+const loadWishlistFromStorage = (): Product[] => {
+  try {
+    const savedWishlist = localStorage.getItem('techshop_wishlist');
+    return savedWishlist ? JSON.parse(savedWishlist) : [];
+  } catch (error) {
+    console.error('Ошибка загрузки избранного:', error);
+    return [];
   }
-  return [];
 };
 
 const initialState: WishlistState = {
-  items: getInitialWishlist(),
+  items: loadWishlistFromStorage(),
 };
 
 const wishlistSlice = createSlice({

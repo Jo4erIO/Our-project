@@ -119,111 +119,114 @@ export default function ProductCard({ product }: ProductCardProps) {
   // Для мобильных устройств - компактный вид с поддержкой свайпа
   if (isMobile) {
     return (
-      <Link
-        to={`/product/${product.id}`}
-        className="product-card-link flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-      >
-        <div className="relative">
-          {/* Изображение товара с поддержкой свайпа */}
-          <div
-            ref={imageRef}
-            className="h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative overflow-hidden touch-pan-x"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {product.images && product.images.length > 0 && !imageError ? (
-              <img
-                src={product.images[currentImageIndex]}
-                alt={product.name}
-                className="h-full object-contain"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                <span>No Image</span>
-              </div>
-            )}
-            
-            {/* Индикаторы изображений для мобильной версии */}
-            {product.images && product.images.length > 1 && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
-                {product.images.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === currentImageIndex
-                        ? 'bg-indigo-600'
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="relative">
+        <button
+          className="absolute top-2 right-2 z-10 p-1 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-sm"
+          onClick={handleWishlistToggle}
+        >
+          <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} size={16} />
+        </button>
         
-          {/* Информация о товаре */}
-          <div className="p-3">
-            <h3 className="font-medium line-clamp-2 h-12">{product.name}</h3>
-            <div className="mt-2 flex justify-between items-center">
-              <div>
-                {product.discount ? (
-                  <>
-                    <span className="font-bold text-red-600 dark:text-red-500">
-                      {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} ₽
-                    </span>
-                    <span className="ml-2 text-gray-500 dark:text-gray-400 line-through text-sm">
-                      {product.price.toLocaleString()} ₽
-                    </span>
-                  </>
-                ) : (
-                  <span className="font-bold">
-                    {product.price.toLocaleString()} ₽
-                  </span>
-                )}
-              </div>
-              <button
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={handleWishlistToggle}
-              >
-                <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} />
-              </button>
-            </div>
-            
-            {/* Выбор цвета для мобильной версии */}
-            {product.colors && product.colors.length > 0 && (
-              <div className="mt-3">
-                <div className="flex flex-wrap gap-1">
-                  {product.colors.map(color => (
+        <Link
+          to={`/product/${product.id}`}
+          className="product-card-link flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="relative">
+            {/* Изображение товара с поддержкой свайпа */}
+            <div
+              ref={imageRef}
+              className="h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative overflow-hidden touch-pan-x"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {product.images && product.images.length > 0 && !imageError ? (
+                <img
+                  src={product.images[currentImageIndex]}
+                  alt={product.name}
+                  className="h-full object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="bg-gray-200 dark:bg-gray-700 border-2 border-dashed rounded-xl w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                  <span>No Image</span>
+                </div>
+              )}
+              
+              {/* Индикаторы изображений для мобильной версии */}
+              {product.images && product.images.length > 1 && (
+                <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
+                  {product.images.map((_, index) => (
                     <div
-                      key={color}
-                      className={`w-5 h-5 rounded-full border-2 transition-all ${
-                        selectedColor === color
-                          ? 'border-indigo-600 shadow-lg scale-110'
-                          : 'border-gray-300 dark:border-gray-600'
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentImageIndex
+                          ? 'bg-indigo-600'
+                          : 'bg-gray-300 dark:bg-gray-600'
                       }`}
-                      style={{
-                        backgroundColor: getColorHex(color),
-                        boxShadow: selectedColor === color
-                          ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)'
-                          : 'none'
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setSelectedColor(color);
-                      }}
-                      title={color}
                     />
                   ))}
                 </div>
-                <div className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                  Выбрано: {selectedColor}
+              )}
+            </div>
+          
+            {/* Информация о товаре */}
+            <div className="p-3">
+              <h3 className="font-medium line-clamp-2 h-12">{product.name}</h3>
+              <div className="mt-2 flex justify-between items-center">
+                <div>
+                  {product.discount ? (
+                    <>
+                      <span className="font-bold text-red-600 dark:text-red-500">
+                        {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} ₽
+                      </span>
+                      <span className="ml-2 text-gray-500 dark:text-gray-400 line-through text-sm">
+                        {product.price.toLocaleString()} ₽
+                      </span>
+                    </>
+                  ) : (
+                    <span className="font-bold">
+                      {product.price.toLocaleString()} ₽
+                    </span>
+                  )}
                 </div>
               </div>
-            )}
+              
+              {/* Выбор цвета для мобильной версии */}
+              {product.colors && product.colors.length > 0 && (
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-1">
+                    {product.colors.map(color => (
+                      <div
+                        key={color}
+                        className={`w-5 h-5 rounded-full border-2 transition-all ${
+                          selectedColor === color
+                            ? 'border-indigo-600 shadow-lg scale-110'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                        style={{
+                          backgroundColor: getColorHex(color),
+                          boxShadow: selectedColor === color
+                            ? '0 0 0 2px white, 0 0 0 4px rgb(79 70 229)'
+                            : 'none'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedColor(color);
+                        }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    Выбрано: {selectedColor}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
     );
   }
 

@@ -18,7 +18,7 @@ export default function Header() {
   const { items: cartItems } = useSelector((state: RootState) => state.cart);
   const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist);
 
-  // Вычисляем общее количество товаров в корзине
+  // Вычисляем количество товаров
   const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const wishlistItemsCount = wishlistItems.length;
 
