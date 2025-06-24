@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FiHeart, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiHeart, FiChevronLeft, FiChevronRight, FiShoppingCart } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { addItem } from '@/store/cartSlice';
 import type { Product } from '@/types/Product';
@@ -8,6 +8,7 @@ import { useDevice } from '@/context/DeviceContext';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
+import { motion } from 'framer-motion';
 
 interface ProductCardProps {
   product: Product;
@@ -62,6 +63,13 @@ export default function ProductCard({ product }: ProductCardProps) {
         image: product.images[0]
       })
     );
+    
+    // Анимация добавления в корзину
+    const button = e.currentTarget;
+    button.classList.add('animate-ping');
+    setTimeout(() => {
+      button.classList.remove('animate-ping');
+    }, 500);
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -120,12 +128,19 @@ export default function ProductCard({ product }: ProductCardProps) {
   if (isMobile) {
     return (
       <div className="relative">
-        <button
-          className="absolute top-2 right-2 z-10 p-1 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-sm"
+        <motion.button
+          className="absolute top-2 right-2 z-10 p-2 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-md"
           onClick={handleWishlistToggle}
+          whileTap={{ scale: 0.9 }}
+          initial={false}
+          animate={{
+            color: isFavorite ? '#ef4444' : '#9ca3af',
+            fill: isFavorite ? '#ef4444' : 'transparent'
+          }}
+          transition={{ duration: 0.2 }}
         >
-          <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} size={16} />
-        </button>
+          <FiHeart size={18} />
+        </motion.button>
         
         <Link
           to={`/product/${product.id}`}
@@ -223,6 +238,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                   </div>
                 </div>
               )}
+              
+              <motion.button
+                onClick={handleAddToCart}
+                whileTap={{ scale: 0.95 }}
+                className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors"
+              >
+                <FiShoppingCart size={16} />
+                <span>В корзину</span>
+              </motion.button>
             </div>
           </div>
         </Link>
@@ -239,12 +263,19 @@ export default function ProductCard({ product }: ProductCardProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative">
-        <button
-          className="absolute top-3 right-3 z-10 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700"
+        <motion.button
+          className="absolute top-3 right-3 z-10 p-2 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700"
           onClick={handleWishlistToggle}
+          whileTap={{ scale: 0.9 }}
+          initial={false}
+          animate={{
+            color: isFavorite ? '#ef4444' : '#9ca3af',
+            fill: isFavorite ? '#ef4444' : 'transparent'
+          }}
+          transition={{ duration: 0.2 }}
         >
-          <FiHeart className={isFavorite ? "text-red-500 fill-current" : ""} size={18} />
-        </button>
+          <FiHeart size={20} />
+        </motion.button>
         
         <div className="h-56 bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative product-image-container">
           {product.images && product.images.length > 0 && !imageError ? (
@@ -360,12 +391,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
           
-          <button
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md transition-colors"
+          <motion.button
             onClick={handleAddToCart}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md flex items-center justify-center gap-2 transition-colors shadow-md"
           >
-            Добавить в корзину
-          </button>
+            <FiShoppingCart size={18} />
+            <span>Добавить в корзину</span>
+          </motion.button>
         </div>
       </div>
     </Link>
