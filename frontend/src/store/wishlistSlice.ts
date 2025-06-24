@@ -5,7 +5,6 @@ interface WishlistState {
   items: Product[];
 }
 
-// Функция для загрузки состояния из localStorage
 const loadWishlistFromStorage = (): Product[] => {
   try {
     const savedWishlist = localStorage.getItem('techshop_wishlist');

@@ -1,15 +1,24 @@
 import { useState } from 'react';
-import { FiUser, FiHeart, FiLogIn, FiSettings, FiHelpCircle } from 'react-icons/fi';
+import { FiUser, FiHeart, FiLogIn, FiSettings, FiShoppingCart } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { logout } from '@/store/authSlice';
 
 interface Props {
   mobile?: boolean;
 }
 
 export default function UserMenu({ mobile = false }: Props) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { token, user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsMenuOpen(false);
+  };
 
   return (
     <div className={`relative ${mobile ? '' : 'hidden md:block'}`}>
@@ -23,7 +32,7 @@ export default function UserMenu({ mobile = false }: Props) {
         aria-label="Меню пользователя"
       >
         <FiUser className={mobile ? "text-xl" : "text-lg"} />
-        {mobile && <span className="ml-3">Профиль</span>}
+        {mobile && <span className="ml-3">{token ? 'Профиль' : 'Вход/Регистрация'}</span>}
       </button>
 
       <AnimatePresence>
@@ -39,8 +48,11 @@ export default function UserMenu({ mobile = false }: Props) {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {isLoggedIn ? (
+            {token ? (
               <>
+                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                  {user?.email}
+                </div>
                 <Link
                   to="/profile"
                   className={`flex items-center ${
@@ -62,6 +74,16 @@ export default function UserMenu({ mobile = false }: Props) {
                   Избранное
                 </Link>
                 <Link
+                  to="/cart"
+                  className={`flex items-center ${
+                    mobile ? 'px-4 py-3' : 'px-4 py-2'
+                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FiShoppingCart className="mr-2" />
+                  Корзина
+                </Link>
+                <Link
                   to="/settings"
                   className={`flex items-center ${
                     mobile ? 'px-4 py-3' : 'px-4 py-2'
@@ -71,42 +93,39 @@ export default function UserMenu({ mobile = false }: Props) {
                   <FiSettings className="mr-2" />
                   Настройки
                 </Link>
-                {mobile && (
-                  <Link
-                    to="/help"
-                    className={`flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <FiHelpCircle className="mr-2" />
-                    Помощь
-                  </Link>
-                )}
                 <div className={`${mobile ? 'border-t my-1' : 'border-t my-1'}`}></div>
                 <button
-                  onClick={() => {
-                    setIsLoggedIn(false);
-                    setIsMenuOpen(false);
-                  }}
+                  onClick={handleLogout}
                   className={`w-full text-left ${
                     mobile ? 'px-4 py-3' : 'px-4 py-2'
-                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                  } text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700`}
                 >
                   Выйти
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => {
-                  setIsLoggedIn(true);
-                  setIsMenuOpen(false);
-                }}
-                className={`flex items-center w-full ${
-                  mobile ? 'px-4 py-3' : 'px-4 py-2'
-                } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
-              >
-                <FiLogIn className="mr-2" />
-                Войти / Регистрация
-              </button>
+              <>
+                <Link
+                  to="/login"
+                  className={`flex items-center ${
+                    mobile ? 'px-4 py-3' : 'px-4 py-2'
+                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FiLogIn className="mr-2" />
+                  Вход
+                </Link>
+                <Link
+                  to="/register"
+                  className={`flex items-center ${
+                    mobile ? 'px-4 py-3' : 'px-4 py-2'
+                  } text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FiUser className="mr-2" />
+                  Регистрация
+                </Link>
+              </>
             )}
           </motion.div>
         )}
