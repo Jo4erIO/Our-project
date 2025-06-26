@@ -137,6 +137,39 @@ export default function WishlistPage() {
                 </div>
               </motion.div>
             ))}
+
+            <section className="advantages-section mt-16 bg-gray-50 dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-center mb-8">Почему выбирают нас</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'Бесплатная доставка',
+                desc: 'По всей России при заказе от 5000₽',
+                icon: '🚚'
+              },
+              {
+                title: 'Гарантия 2 года',
+                desc: 'Официальная гарантия на всю технику',
+                icon: '🔧'
+              },
+              {
+                title: 'Скидки постоянным клиентам',
+                desc: 'Накопительная система бонусов',
+                icon: '🎁'
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="advantage-card text-center p-6 bg-white dark:bg-gray-700 rounded-lg shadow-sm"
+              >
+                <div className="advantage-icon text-4xl mb-4">{item.icon}</div>
+                <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                <p className="text-gray-600 dark:text-gray-300">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        
           </AnimatePresence>
         </div>
       )}
