@@ -101,6 +101,8 @@ function AppContent() {
           </Suspense>
         </Container>
       </main>
+      {/* Добавляем отступ перед футером */}
+      {!hideLayout && <div className="h-16 bg-transparent"></div>}
       {!hideLayout && <Footer />}
     </div>
   );

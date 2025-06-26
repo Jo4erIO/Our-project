@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiMinus, FiPlus, FiTrash2, FiImage } from 'react-icons/fi';
+import { FiMinus, FiPlus, FiTrash2, FiImage, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { removeItem, updateQuantity } from '../../store/cartSlice';
 import type { CartItem } from '../../store/cartSlice';
@@ -11,61 +11,95 @@ interface Props {
 export default function CartItem({ item }: Props) {
   const dispatch = useDispatch();
   const [imageError, setImageError] = useState(false);
+  const [showImage, setShowImage] = useState(true);
 
   return (
-    <div className="flex items-center border-b py-4">
-      <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-        {item.image && !imageError ? (
-          <img 
-            src={item.image} 
-            alt={item.name}
-            className="w-full h-full object-contain p-1"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="bg-gray-200 rounded-xl w-16 h-16 flex items-center justify-center">
-            <FiImage size={24} className="text-gray-400" />
+    <tr className="hover:bg-gray-50">
+      {/* Товар */}
+      <td className="px-6 py-4 whitespace-nowrap w-2/5">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-md overflow-hidden mr-4 border border-gray-200">
+            {showImage ? (
+              item.image && !imageError ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="h-full w-full object-contain p-1"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+                  <FiImage className="text-gray-400" />
+                </div>
+              )
+            ) : null}
           </div>
-        )}
-      </div>
-      
-      <div className="ml-4 flex-grow">
-        <h3 className="font-medium">{item.name}</h3>
-        <p className="text-gray-600">{item.price.toLocaleString()} ₽</p>
-      </div>
-      
-      <div className="flex items-center">
+          <div>
+            <div className="text-sm font-medium text-gray-900">{item.name}</div>
+            <button 
+              onClick={() => setShowImage(!showImage)}
+              className="mt-1 text-xs text-gray-500 hover:text-gray-700 flex items-center"
+            >
+              {showImage ? (
+                <>
+                  <FiChevronUp className="mr-1" size={12} />
+                  Скрыть
+                </>
+              ) : (
+                <>
+                  <FiChevronDown className="mr-1" size={12} />
+                  Показать
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </td>
+
+      {/* Цена */}
+      <td className="px-6 py-4 whitespace-nowrap w-1/5">
+        <div className="text-sm text-gray-900">{item.price.toLocaleString()} ₽</div>
+        <div className="text-xs text-gray-500">за шт.</div>
+      </td>
+
+      {/* Количество */}
+      <td className="px-6 py-4 whitespace-nowrap w-1/5">
+        <div className="flex items-center border rounded-md w-fit">
+          <button 
+            onClick={() => dispatch(updateQuantity({
+              id: item.id, 
+              quantity: Math.max(1, item.quantity - 1)
+            }))}
+            className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+          >
+            <FiMinus size={14} />
+          </button>
+          <span className="px-3 text-center w-8 border-x border-gray-200">{item.quantity}</span>
+          <button 
+            onClick={() => dispatch(updateQuantity({
+              id: item.id, 
+              quantity: item.quantity + 1
+            }))}
+            className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+          >
+            <FiPlus size={14} />
+          </button>
+        </div>
+      </td>
+
+      {/* Итого */}
+      <td className="px-6 py-4 whitespace-nowrap w-1/5">
+        <div className="text-sm font-medium text-gray-900">
+          {(item.price * item.quantity).toLocaleString()} ₽
+        </div>
         <button 
-          onClick={() => dispatch(updateQuantity({
-            id: item.id, 
-            quantity: Math.max(1, item.quantity - 1)
-          }))}
-          className="p-2 rounded-full hover:bg-gray-100"
+          onClick={() => dispatch(removeItem(item.id))}
+          className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center"
         >
-          <FiMinus />
+          <FiTrash2 className="mr-1" size={12} />
+          Удалить
         </button>
-        <span className="mx-2 w-8 text-center">{item.quantity}</span>
-        <button 
-          onClick={() => dispatch(updateQuantity({
-            id: item.id, 
-            quantity: item.quantity + 1
-          }))}
-          className="p-2 rounded-full hover:bg-gray-100"
-        >
-          <FiPlus />
-        </button>
-      </div>
-      
-      <div className="ml-6 w-24 text-right font-medium">
-        {(item.price * item.quantity).toLocaleString()} ₽
-      </div>
-      
-      <button 
-        onClick={() => dispatch(removeItem(item.id))}
-        className="ml-4 text-red-500 hover:text-red-700"
-      >
-        <FiTrash2 size={20} />
-      </button>
-    </div>
+      </td>
+    </tr>
   );
 }
