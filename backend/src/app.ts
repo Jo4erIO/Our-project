@@ -38,4 +38,8 @@ app.use('/auth', authRoutes);
 
 // Middleware для обработки ошибок
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  con
+  console.error('Server error:', err);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
+export default app;
