@@ -1,151 +1,186 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { FaArrowLeft } from 'react-icons/fa';
 import { register } from '@/api/authApi';
+import { setCredentials } from '@/store/authSlice';
+
+interface FormData {
+  email: string;
+  password: string;
+  repeatPassword: string;
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
+    email: '',
+    password: '',
+    repeatPassword: ''
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const repeatPassword = formData.get('repeatPassword') as string;
-
-    // Валидация
-    if (password !== repeatPassword) {
-      setError('Пароли не совпадают');
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const response = await register(email, password);
-      console.log('Registration success:', response);
+      // Валидация
+      if (!formData.email || !formData.password || !formData.repeatPassword) {
+        throw new Error('All fields are required');
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
+      if (formData.password !== formData.repeatPassword) {
+        throw new Error('Passwords do not match');
+      }
+
+      console.log('Sending registration request for:', formData.email);
       
-      // Переход на страницу входа с подставленными данными
-      navigate('/login', {
-        state: {
-          identifier: email,
-          password: password
-        }
-      });
-    } catch (err) {
-      setError('Ошибка регистрации. Попробуйте другой email.');
-      console.error('Registration error:', err);
+      // Отправка данных
+      const response = await register(formData.email, formData.password);
+      
+      console.log('Registration successful:', response);
+      
+      // Сохранение данных аутентификации
+      dispatch(setCredentials({
+        user: response.user,
+        token: response.token
+      }));
+
+      // Перенаправление
+      navigate('/');
+    } catch (err: unknown) {
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        console.error('Registration error details:', err);
+      } else {
+        console.error('Unknown registration error:', err);
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
       <div className="absolute top-6 left-6">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
         >
           <FaArrowLeft size={18} />
-          <span>На главную</span>
+          <span>Back to home</span>
         </Link>
       </div>
 
-      <div className="w-full max-w-md bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Регистрация</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Создайте новый аккаунт
+              Fill in your details to register
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className="px-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition"
-                  placeholder="Ваш email"
-                />
-              </div>
+          {error && (
+            <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-center">
+              {error}
+            </div>
+          )}
 
-              <div className="flex flex-col gap-1">
-                <label htmlFor="login" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Логин
-                </label>
-                <input
-                  id="login"
-                  name="login"
-                  type="text"
-                  required
-                  className="px-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition"
-                  placeholder="Придумайте логин"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Пароль
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="px-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition"
-                  placeholder="Придумайте пароль"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label htmlFor="repeatPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Повторите пароль
-                </label>
-                <input
-                  id="repeatPassword"
-                  name="repeatPassword"
-                  type="password"
-                  required
-                  className="px-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white transition"
-                  placeholder="Повторите пароль"
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Email Address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                placeholder="your@email.com"
+              />
             </div>
 
-            {error && (
-              <div className="text-red-500 text-sm text-center py-2 px-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                {error}
-              </div>
-            )}
+            <div>
+              <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                placeholder="At least 6 characters"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="repeatPassword" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Repeat Password
+              </label>
+              <input
+                id="repeatPassword"
+                name="repeatPassword"
+                type="password"
+                value={formData.repeatPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                placeholder="Confirm your password"
+              />
+            </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
-              {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>
+                  Registering...
+                </span>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            <span>Уже есть аккаунт? </span>
+            <span>Already have an account? </span>
             <Link
               to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+              className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             >
-              Войти
+              Sign in here
             </Link>
           </div>
         </div>

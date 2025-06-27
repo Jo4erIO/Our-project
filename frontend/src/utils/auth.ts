@@ -1,19 +1,41 @@
-// src/utils/auth.ts
+export const setAuthToken = (token: string) => {
+  localStorage.setItem('token', token);
+};
 
-export const TOKEN_KEY = 'token';
+export const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
 
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
+export const removeAuthToken = () => {
+  localStorage.removeItem('token');
+};
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
+export const setAuthUser = (user: object) => {
+  localStorage.setItem('user', JSON.stringify(user));
+};
 
-export function removeToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
+export const getAuthUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
 
-export function isAuthenticated(): boolean {
-  return !!getToken();
-}
+export const removeAuthUser = () => {
+  localStorage.removeItem('user');
+};
+
+export const clearAuthData = () => {
+  removeAuthToken();
+  removeAuthUser();
+};
+
+export const setToken = (token: string) => {
+  localStorage.setItem('token', token);
+};
+
+export const removeToken = () => {
+  localStorage.removeItem('token');
+};
+
+export const getToken = () => {
+  return localStorage.getItem('token');
+};

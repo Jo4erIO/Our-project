@@ -16,11 +16,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client", "react" , "react/jsx-runtime"],
-    "baseUrl": "src",
+    "types": ["vite/client", "react" , "react/jsx-runtime" , "node"],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["src/*"]
     }
+    
   },
   "include": ["src"],
   "exclude": ["node_modules"]
