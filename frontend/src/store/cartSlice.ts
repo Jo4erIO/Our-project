@@ -1,33 +1,65 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { CartApi } from '../api/cartApi';
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
-  image: string; // Добавлено поле для изображения
+  image: string;
   color?: string;
 }
 
 interface CartState {
   items: CartItem[];
+  loading: boolean;
+  error: string | null;
 }
 
 const CART_KEY = 'techshop_cart';
 
-// Загрузка корзины из localStorage
 const loadCartFromStorage = (): CartState => {
   try {
     const savedCart = localStorage.getItem(CART_KEY);
-    return savedCart ? JSON.parse(savedCart) : { items: [] };
+    return savedCart ? JSON.parse(savedCart) : { items: [], loading: false, error: null };
   } catch (error) {
     console.error('Ошибка загрузки корзины:', error);
-    return { items: [] };
+    return { items: [], loading: false, error: null };
   }
 };
 
-// Начальное состояние из localStorage
 const initialState: CartState = loadCartFromStorage();
+
+export const fetchUserCart = createAsyncThunk(
+  'cart/fetchUserCart',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const response = await CartApi.getCart(userId);
+      return response.data.items;
+    } catch (error) {
+      return rejectWithValue('Не удалось загрузить корзину');
+    }
+  }
+);
+
+export const syncCartWithBackend = createAsyncThunk(
+  'cart/syncCart',
+  async (userId: string, { getState, rejectWithValue }) => {
+    try {
+      const { cart } = getState() as { cart: CartState };
+      await CartApi.syncCart(
+        userId,
+        cart.items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity
+        }))
+      );
+    } catch (error) {
+      return rejectWithValue('Не удалось синхронизировать корзину');
+    }
+  }
+);
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -35,14 +67,11 @@ const cartSlice = createSlice({
   reducers: {
     addItem: (state, action: PayloadAction<CartItem>) => {
       const existingItem = state.items.find(item => item.id === action.payload.id);
-      
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
       } else {
         state.items.push(action.payload);
       }
-      
-      // Сохраняем в localStorage
       localStorage.setItem(CART_KEY, JSON.stringify(state));
     },
     removeItem: (state, action: PayloadAction<string>) => {
@@ -60,6 +89,22 @@ const cartSlice = createSlice({
       state.items = [];
       localStorage.setItem(CART_KEY, JSON.stringify(state));
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUserCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserCart.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.loading = false;
+        localStorage.setItem(CART_KEY, JSON.stringify(state));
+      })
+      .addCase(fetchUserCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   }
 });
 

@@ -7,9 +7,10 @@ interface Props {
     price: number;
     quantity: number;
   }[];
+  userId?: string;
 }
 
-export default function CartSummary({ items }: Props) {
+export default function CartSummary({ items, userId }: Props) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 5000 ? 0 : 500;
   const total = subtotal + shipping;

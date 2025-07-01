@@ -1,17 +1,52 @@
+// src/components/cart/CartItem.tsx
 import { useState } from 'react';
 import { FiMinus, FiPlus, FiTrash2, FiImage, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { removeItem, updateQuantity } from '../../store/cartSlice';
+import { CartApi } from '../../api/cartApi';
 import type { CartItem } from '../../store/cartSlice';
 
 interface Props {
   item: CartItem;
+  userId?: string;
 }
 
-export default function CartItem({ item }: Props) {
+export default function CartItem({ item, userId }: Props) {
   const dispatch = useDispatch();
   const [imageError, setImageError] = useState(false);
   const [showImage, setShowImage] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const handleQuantityChange = async (newQuantity: number) => {
+    const quantity = Math.max(1, newQuantity);
+    dispatch(updateQuantity({ id: item.id, quantity }));
+    
+    if (userId) {
+      setLoading(true);
+      try {
+        await CartApi.updateQuantity(userId, item.productId, quantity);
+      } catch (error) {
+        console.error('Ошибка обновления количества:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleRemove = async () => {
+    dispatch(removeItem(item.id));
+    
+    if (userId) {
+      setLoading(true);
+      try {
+        await CartApi.removeItem(userId, item.productId);
+      } catch (error) {
+        console.error('Ошибка удаления товара:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-gray-50">
@@ -66,21 +101,19 @@ export default function CartItem({ item }: Props) {
       <td className="px-6 py-4 whitespace-nowrap w-1/5">
         <div className="flex items-center border rounded-md w-fit">
           <button 
-            onClick={() => dispatch(updateQuantity({
-              id: item.id, 
-              quantity: Math.max(1, item.quantity - 1)
-            }))}
-            className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+            onClick={() => handleQuantityChange(item.quantity - 1)}
+            disabled={loading || item.quantity <= 1}
+            className="px-2 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
             <FiMinus size={14} />
           </button>
-          <span className="px-3 text-center w-8 border-x border-gray-200">{item.quantity}</span>
+          <span className="px-3 text-center w-8 border-x border-gray-200">
+            {item.quantity}
+          </span>
           <button 
-            onClick={() => dispatch(updateQuantity({
-              id: item.id, 
-              quantity: item.quantity + 1
-            }))}
-            className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+            onClick={() => handleQuantityChange(item.quantity + 1)}
+            disabled={loading}
+            className="px-2 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
             <FiPlus size={14} />
           </button>
@@ -93,8 +126,9 @@ export default function CartItem({ item }: Props) {
           {(item.price * item.quantity).toLocaleString()} ₽
         </div>
         <button 
-          onClick={() => dispatch(removeItem(item.id))}
-          className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center"
+          onClick={handleRemove}
+          disabled={loading}
+          className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center disabled:opacity-50"
         >
           <FiTrash2 className="mr-1" size={12} />
           Удалить

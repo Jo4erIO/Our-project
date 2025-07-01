@@ -3,10 +3,13 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
 import dotenv from 'dotenv';
+import cartRoutes from './routes/cartRoutes';
+import wishlistRoutes from './routes/wishlistRoutes';
 
 dotenv.config();
 
 const app = express();
+
 
 // Подключаем парсинг JSON ПЕРВЫМ
 app.use(express.json()); // <-- ДОЛЖНО БЫТЬ ПЕРВЫМ
@@ -41,5 +44,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   console.error('Server error:', err);
   res.status(500).json({ message: 'Internal server error' });
 });
+
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 export default app;

@@ -10,13 +10,15 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
   user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
   token: localStorage.getItem('token'),
   isLoading: false,
-  error: null
+  error: null,
+  isAuthenticated: !!localStorage.getItem('token')
 };
 
 const authSlice = createSlice({
@@ -27,6 +29,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.error = null;
+      state.isAuthenticated = true;
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
@@ -34,6 +37,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
+      state.isAuthenticated = false;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     },
@@ -59,6 +63,7 @@ export const {
 
 export const selectCurrentUser = (state: { auth: AuthState }) => state.auth.user;
 export const selectCurrentToken = (state: { auth: AuthState }) => state.auth.token;
+export const selectCurrentUserId = (state: { auth: AuthState }) => state.auth.user?.id;
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;
 

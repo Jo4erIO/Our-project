@@ -1,32 +1,41 @@
-import { Product } from '@/types/Product';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '@/store';
 import { addItem } from '@/store/cartSlice';
 import { removeFromWishlist } from '@/store/wishlistSlice';
-import { Link } from 'react-router-dom';
+import type { WishlistItem as WishlistItemType } from '@/types/Product';
 import { FiTrash2, FiShoppingCart } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
-interface WishlistItemProps {
-  product: Product;
+interface Props {
+  item: WishlistItemType;
+  userId: string;
+  onAddToCart?: () => void;
+  onRemove?: () => void;
 }
 
-export default function WishlistItem({ product }: WishlistItemProps) {
-  const dispatch = useDispatch();
-  
+export default function WishlistItem({ item, userId, onAddToCart, onRemove }: Props) {
+  const dispatch = useAppDispatch();
+
   const handleAddToCart = () => {
     dispatch(addItem({
-      id: product.id,
-      name: product.name,
-      price: product.discount
-        ? Math.round(product.price * (1 - product.discount / 100))
-        : product.price,
+      id: item.id,
+      productId: item.productId,
+      name: item.name,
+      price: item.discount
+        ? Math.round(item.price * (1 - (item.discount / 100)))
+        : item.price,
       quantity: 1,
-      image: product.images[0]
+      image: item.image
     }));
+    onAddToCart?.();
   };
 
-  const handleRemove = () => {
-    dispatch(removeFromWishlist(product.id));
+  const handleRemove = async () => {
+    try {
+      await dispatch(removeFromWishlist({ userId, productId: item.id })).unwrap();
+      onRemove?.();
+    } catch (error) {
+      console.error('Failed to remove:', error);
+    }
   };
 
   return (
@@ -38,39 +47,28 @@ export default function WishlistItem({ product }: WishlistItemProps) {
       transition={{ duration: 0.3 }}
     >
       <div className="w-24 h-24 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
-        {product.images && product.images.length > 0 ? (
-          <img 
-            src={product.images[0]} 
-            alt={product.name} 
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <div className="bg-gray-200 dark:bg-gray-700 rounded-xl w-16 h-16 flex items-center justify-center">
-            <span className="text-gray-400 dark:text-gray-500">No Image</span>
-          </div>
-        )}
+        <img 
+          src={item.image} 
+          alt={item.name} 
+          className="w-full h-full object-contain"
+        />
       </div>
       
       <div className="ml-4 flex-grow">
-        <Link 
-          to={`/product/${product.id}`}
-          className="font-medium hover:text-indigo-600 dark:hover:text-indigo-400"
-        >
-          {product.name}
-        </Link>
+        <h3 className="font-medium">{item.name}</h3>
         <div className="mt-2">
-          {product.discount ? (
+          {item.discount ? (
             <div className="flex items-baseline">
               <span className="text-lg font-bold text-red-600 dark:text-red-500">
-                {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} ₽
+                {Math.round(item.price * (1 - (item.discount / 100))).toLocaleString()} ₽
               </span>
               <span className="ml-2 text-gray-500 dark:text-gray-400 line-through text-sm">
-                {product.price.toLocaleString()} ₽
+                {item.price.toLocaleString()} ₽
               </span>
             </div>
           ) : (
             <span className="text-lg font-bold">
-              {product.price.toLocaleString()} ₽
+              {item.price.toLocaleString()} ₽
             </span>
           )}
         </div>

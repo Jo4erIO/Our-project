@@ -14,6 +14,9 @@ import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
+import { selectCurrentUserId } from '@/store/authSlice';
+import { AnyAction } from 'redux';
+
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +30,7 @@ export default function ProductPage() {
   // Wishlist state
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const isFavorite = wishlistItems.some(item => item.id === product?.id);
+  const userId = useSelector(selectCurrentUserId);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -54,6 +58,7 @@ export default function ProductPage() {
     
     dispatch(addItem({
       id: `${product.id}-${selectedColor}`,
+      productId: product.id,
       name: `${product.name}${selectedColor ? ` (${selectedColor})` : ''}`,
       price: product.discount
         ? Math.round(product.price * (1 - product.discount / 100))
@@ -63,15 +68,29 @@ export default function ProductPage() {
     }));
   };
 
-  const handleWishlistToggle = () => {
-    if (product) {
-      if (isFavorite) {
-        dispatch(removeFromWishlist(product.id));
-      } else {
-        dispatch(addToWishlist(product));
-      }
+  const handleWishlistToggle = async () => {
+  if (!product || !userId) return;
+  
+  try {
+    if (isFavorite) {
+      await dispatch(
+        removeFromWishlist({ 
+          userId, 
+          productId: product.id 
+        }) as unknown as AnyAction
+      );
+    } else {
+      await dispatch(
+        addToWishlist({ 
+          userId, 
+          product 
+        }) as unknown as AnyAction
+      );
     }
-  };
+  } catch (error) {
+    console.error('Error updating wishlist:', error);
+  }
+};
 
   const handleShare = () => {
     if (navigator.share) {

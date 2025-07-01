@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, ReactNode } from 'react';
+import React, { lazy, Suspense, useEffect, ReactNode, ComponentType } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -18,15 +18,19 @@ import { DeviceProvider } from '@/context/DeviceContext';
 import { Provider, useSelector } from 'react-redux';
 import { store, RootState } from '@/store';
 
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const CartPage = lazy(() => import('@/pages/CartPage'));
-const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
-const ProductPage = lazy(() => import('@/pages/ProductPage'));
-const CategoryPage = lazy(() => import('@/pages/CategoryPage'));
-const WishlistPage = lazy(() => import('@/pages/WishlistPage'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+// Исправленные lazy-импорты с явным указанием типа
+const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.default as ComponentType<any> })));
+const CartPage = lazy(() => import('@/pages/CartPage').then(module => ({ default: module.default as ComponentType<any> })));
+const CheckoutPage = lazy(() => import('@/pages/CheckoutPage').then(module => ({ default: module.default as ComponentType<any> })));
+const ProductPage = lazy(() => import('@/pages/ProductPage').then(module => ({ default: module.default as ComponentType<any> })));
+const CategoryPage = lazy(() => import('@/pages/CategoryPage').then(module => ({ default: module.default as ComponentType<any> })));
+const WishlistPage = lazy(() => 
+  import('@/pages/WishlistPage')
+    .then(module => ({ default: module.default as React.ComponentType }))
+);
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(module => ({ default: module.default as ComponentType<any> })));
+const LoginPage = lazy(() => import('@/pages/LoginPage').then(module => ({ default: module.default as ComponentType<any> })));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage').then(module => ({ default: module.default as ComponentType<any> })));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -70,7 +74,7 @@ const GuestOnly = ({ children }: { children: ReactNode }) => {
 
 function AppContent() {
   const location = useLocation();
-  const hideLayout = location.pathname === '/login' || location.pathname === '/register';
+  const hideLayout = ['/login', '/register'].includes(location.pathname);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -89,12 +93,48 @@ function AppContent() {
               <Routes location={location} key={location.pathname}>
                 <Route path="/" element={<PageAnimation><HomePage /></PageAnimation>} />
                 <Route path="/cart" element={<PageAnimation><CartPage /></PageAnimation>} />
-                <Route path="/checkout" element={<RequireAuth><PageAnimation><CheckoutPage /></PageAnimation></RequireAuth>} />
+                <Route 
+                  path="/checkout" 
+                  element={
+                    <RequireAuth>
+                      <PageAnimation>
+                        <CheckoutPage />
+                      </PageAnimation>
+                    </RequireAuth>
+                  } 
+                />
                 <Route path="/product/:id" element={<PageAnimation><ProductPage /></PageAnimation>} />
                 <Route path="/category/:categoryId" element={<PageAnimation><CategoryPage /></PageAnimation>} />
-                <Route path="/wishlist" element={<RequireAuth><PageAnimation><WishlistPage /></PageAnimation></RequireAuth>} />
-                <Route path="/login" element={<GuestOnly><PageAnimation><LoginPage /></PageAnimation></GuestOnly>} />
-                <Route path="/register" element={<GuestOnly><PageAnimation><RegisterPage /></PageAnimation></GuestOnly>} />
+                <Route 
+                  path="/wishlist" 
+                  element={
+                    <RequireAuth>
+                      <PageAnimation>
+                        <WishlistPage />
+                      </PageAnimation>
+                    </RequireAuth>
+                  } 
+                />
+                <Route 
+                  path="/login" 
+                  element={
+                    <GuestOnly>
+                      <PageAnimation>
+                        <LoginPage />
+                      </PageAnimation>
+                    </GuestOnly>
+                  } 
+                />
+                <Route 
+                  path="/register" 
+                  element={
+                    <GuestOnly>
+                      <PageAnimation>
+                        <RegisterPage />
+                      </PageAnimation>
+                    </GuestOnly>
+                  } 
+                />
                 <Route path="*" element={<PageAnimation><NotFoundPage /></PageAnimation>} />
               </Routes>
             </AnimatePresence>

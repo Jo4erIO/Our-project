@@ -1,18 +1,90 @@
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store';
+import { fetchUserCart, syncCartWithBackend } from '../store/cartSlice';
 import Container from '../components/ui/Container';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiShoppingBag } from 'react-icons/fi';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../store';
 import CartItem from '../components/cart/CartItem';
+import CartSummary from '../components/cart/CartSummary';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { useAppDispatch } from '../store';
 
 export default function CartPage() {
-  const { items } = useSelector((state: RootState) => state.cart);
+  const dispatch = useAppDispatch();
+  const { items, loading, error } = useSelector((state: RootState) => state.cart);
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // Загружаем корзину при монтировании
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      dispatch(fetchUserCart(userId));
+    }
+  }, [dispatch, isAuthenticated, userId]);
+
+  // Синхронизируем при размонтировании
+  useEffect(() => {
+    return () => {
+      if (isAuthenticated && userId && items.length > 0) {
+        dispatch(syncCartWithBackend(userId));
+      }
+    };
+  }, [dispatch, isAuthenticated, userId, items]);
+
+  if (!isAuthenticated) {
+    return (
+      <Container className="py-6">
+        <div className="text-center py-12">
+          <div className="bg-indigo-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <FiShoppingBag className="text-indigo-600" size={36} />
+          </div>
+          <h2 className="text-xl font-bold mb-3">Требуется авторизация</h2>
+          <p className="text-gray-600 max-w-md mx-auto mb-6 text-sm">
+            Для просмотра корзины необходимо войти в систему
+          </p>
+          <Link 
+            to="/login" 
+            state={{ from: '/cart' }}
+            className="bg-indigo-600 text-white px-5 py-2 rounded-md inline-flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-sm text-sm"
+          >
+            Войти в аккаунт
+          </Link>
+        </div>
+      </Container>
+    );
+  }
+
+  if (loading && items.length === 0) {
+    return (
+      <Container className="py-6">
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="py-6">
+        <div className="text-center text-red-500">
+          <p className="mb-4">{error}</p>
+          <button 
+            onClick={() => userId && dispatch(fetchUserCart(userId))}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Попробовать снова
+          </button>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-6">
-      {/* Хлебные крошки */}
       <div className="mb-4">
         <Link to="/" className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm">
           <FiArrowLeft className="mr-1" size={14} />
@@ -47,93 +119,59 @@ export default function CartPage() {
           </motion.div>
         ) : (
           <div className="overflow-x-auto">
-            {/* Таблица с товарами */}
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
-                  <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
-                  <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
-                  <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Итого</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Итого</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {items.map(item => (
-                  <CartItem key={item.id} item={item} />
+                  <CartItem key={item.id} item={item} userId={userId} />
                 ))}
               </tbody>
             </table>
 
-            {/* Блок оформления заказа (фиксирован справа) */}
             <div className="mt-4 bg-white p-4 rounded-lg shadow-sm float-right w-72 sticky top-4">
-              <div className="mb-3">
-                <h3 className="font-bold text-gray-900">Ваш заказ</h3>
-                <div className="flex justify-between mt-2 items-center">
-                  <span className="text-sm text-gray-600">{items.length} товар</span>
-                  <span className="font-medium text-gray-900">{total.toLocaleString()} ₽</span>
-                </div>
-              </div>
-
-              {/* Кнопка оформления */}
-              <Link 
-                to="/checkout" 
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-md text-center font-medium transition-colors shadow-sm block text-sm"
-              >
-                Перейти к оформлению
-              </Link>
-
-              {/* Дополнительная информация */}
-              <div className="mt-2 text-xs text-gray-500 text-center">
-                Доставка рассчитывается при оформлении
-              </div>
-
-              {/* Блок с преимуществами (опционально) */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <ul className="text-xs text-gray-500 space-y-1.5">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-1.5">✓</span>
-                    Бесплатная доставка от 5000 ₽
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-1.5">✓</span>
-                    Гарантия возврата 14 дней
-                  </li>
-                </ul>
-              </div>
+              <CartSummary items={items} userId={userId} />
             </div>
-              <section className="advantages-section mt-16 bg-gray-50 dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-center mb-8">Почему выбирают нас</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'Бесплатная доставка',
-                desc: 'По всей России при заказе от 5000₽',
-                icon: '🚚'
-              },
-              {
-                title: 'Гарантия 2 года',
-                desc: 'Официальная гарантия на всю технику',
-                icon: '🔧'
-              },
-              {
-                title: 'Скидки постоянным клиентам',
-                desc: 'Накопительная система бонусов',
-                icon: '🎁'
-              }
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="advantage-card text-center p-6 bg-white dark:bg-gray-700 rounded-lg shadow-sm"
-              >
-                <div className="advantage-icon text-4xl mb-4">{item.icon}</div>
-                <h3 className="font-bold text-lg mb-2">{item.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-            {/* Очистка float */}
+            
             <div className="clear-both"></div>
+            
+            <section className="mt-16 bg-gray-50 rounded-xl p-8 border border-gray-200">
+              <h2 className="text-2xl font-bold text-center mb-8">Почему выбирают нас</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[
+                  {
+                    title: 'Бесплатная доставка',
+                    desc: 'По всей России при заказе от 5000₽',
+                    icon: '🚚'
+                  },
+                  {
+                    title: 'Гарантия 2 года',
+                    desc: 'Официальная гарантия на всю технику',
+                    icon: '🔧'
+                  },
+                  {
+                    title: 'Скидки постоянным клиентам',
+                    desc: 'Накопительная система бонусов',
+                    icon: '🎁'
+                  }
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="text-center p-6 bg-white rounded-lg shadow-sm"
+                  >
+                    <div className="text-4xl mb-4">{item.icon}</div>
+                    <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                    <p className="text-gray-600">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
       </div>

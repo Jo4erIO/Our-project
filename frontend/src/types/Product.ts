@@ -8,11 +8,31 @@ export interface Product {
   rating: number;
   discount?: number;
   stock?: number;
-  features?: string[]; 
-  colors?: string[]; // Добавлены цвета
+  features?: string[];
+  colors?: string[];
   details?: string;
   specifications?: { 
     title: string; 
     items: string[] 
   }[];
+}
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  color?: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  addedAt: string;
+  discount?: number;
 }
