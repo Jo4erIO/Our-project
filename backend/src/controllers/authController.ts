@@ -5,15 +5,21 @@ import User from '../models/User';
 
 // Вспомогательная функция для преобразования строки в секунды
 function parseExpiresIn(expiresIn: string): number {
-  const value = parseInt(expiresIn.slice(0, -1), 10);
-  const unit = expiresIn.slice(-1);
+  // Для значений без суффикса (просто число)
+  if (/^\d+$/.test(expiresIn)) {
+    return parseInt(expiresIn, 10);
+  }
+  
+  // Для значений с суффиксом
+  const value = parseInt(expiresIn, 10);
+  const unit = expiresIn.replace(value.toString(), '').toLowerCase();
 
   switch (unit) {
     case 's': return value;          // секунды
     case 'm': return value * 60;      // минуты
-    case 'h': return value * 3600;    // часы
-    case 'd': return value * 86400;   // дни
-    default: return parseInt(expiresIn, 10) || 3600;
+    case 'h': return value * 60 * 60; // часы
+    case 'd': return value * 60 * 60 * 24; // дни
+    default: return 3600; // 1 час по умолчанию
   }
 }
 
@@ -32,7 +38,6 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email и пароль обязательны' });
     }
 
-
     // Хеширование пароля
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -47,7 +52,7 @@ export const register = async (req: Request, res: Response) => {
     const savedUser = await newUser.save();
 
     // Определение времени истечения токена
-    const expiresIn = process.env.TOKEN_EXPIRES_IN || '1h';
+    const expiresIn = process.env.TOKEN_EXPIRES_IN || '1000h';
     const expiresInSeconds = parseExpiresIn(expiresIn);
 
     // Генерация JWT токена
@@ -56,6 +61,15 @@ export const register = async (req: Request, res: Response) => {
       process.env.JWT_SECRET!,
       { expiresIn: expiresInSeconds }
     );
+
+    // Установка токена в куки
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: expiresInSeconds * 1000, // в миллисекундах
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/'
+    });
 
     // Ответ с токеном и данными пользователя
     res.status(201).json({
@@ -98,6 +112,15 @@ export const login = async (req: Request, res: Response) => {
       process.env.JWT_SECRET!,
       { expiresIn: expiresInSeconds }
     );
+
+    // Установка токена в куки
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: expiresInSeconds * 1000, // в миллисекундах
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/'
+    });
 
     // Ответ с токеном и данными пользователя
     res.json({

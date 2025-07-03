@@ -7,16 +7,12 @@ import { fetchProductById } from '@/api/ProductsApi';
 import type { Product } from '@/types/Product';
 import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '@/store';
 import { addItem } from '@/store/cartSlice';
 import SimilarProducts from '@/components/product/SimilarProducts';
 import { motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
 import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
 import { selectCurrentUserId } from '@/store/authSlice';
-import { AnyAction } from 'redux';
-
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,12 +21,11 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedImage, setSelectedImage] = useState(0);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   
-  // Wishlist state
-  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const wishlistItems = useAppSelector((state) => state.wishlist.items);
   const isFavorite = wishlistItems.some(item => item.id === product?.id);
-  const userId = useSelector(selectCurrentUserId);
+  const userId = useAppSelector(selectCurrentUserId);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -69,28 +64,18 @@ export default function ProductPage() {
   };
 
   const handleWishlistToggle = async () => {
-  if (!product || !userId) return;
-  
-  try {
-    if (isFavorite) {
-      await dispatch(
-        removeFromWishlist({ 
-          userId, 
-          productId: product.id 
-        }) as unknown as AnyAction
-      );
-    } else {
-      await dispatch(
-        addToWishlist({ 
-          userId, 
-          product 
-        }) as unknown as AnyAction
-      );
+    if (!product || !userId) return;
+    
+    try {
+      if (isFavorite) {
+        await dispatch(removeFromWishlist(product.id)).unwrap();
+      } else {
+        await dispatch(addToWishlist(product.id)).unwrap();
+      }
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
     }
-  } catch (error) {
-    console.error('Error updating wishlist:', error);
-  }
-};
+  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -123,7 +108,6 @@ export default function ProductPage() {
     }
   };
 
-  // Функция для определения светлый ли цвет
   const isLightColor = (hexColor: string): boolean => {
     const hex = hexColor.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -216,7 +200,6 @@ export default function ProductPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
-          {/* Галерея изображений с миниатюрами */}
           <div className="relative">
             <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-8 flex justify-center items-center mb-4 relative product-image-container">
               {product.images?.[selectedImage] ? (
@@ -227,7 +210,6 @@ export default function ProductPage() {
                     className="max-h-full max-w-full object-contain"
                   />
                 
-                  {/* Стрелки переключения */}
                   {product.images.length > 1 && (
                     <>
                       <button
@@ -243,7 +225,6 @@ export default function ProductPage() {
                         <FiChevronRight size={24} />
                       </button>
                     
-                      {/* Индикаторы изображений */}
                       <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-1.5 z-10">
                         {product.images.map((_, index) => (
                           <div
@@ -266,7 +247,6 @@ export default function ProductPage() {
               )}
             </div>
             
-            {/* Панель миниатюр */}
             {product.images && product.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
                 {product.images.map((img, index) => (
@@ -284,7 +264,6 @@ export default function ProductPage() {
             )}
           </div>
         
-          {/* Информация о товаре */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="flex justify-between items-start mb-2">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{product.name}</h1>
@@ -438,7 +417,6 @@ export default function ProductPage() {
           </div>
         </div>
         
-        {/* Похожие товары */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Похожие товары</h2>
           <SimilarProducts
@@ -451,7 +429,6 @@ export default function ProductPage() {
   );
 }
 
-// Вспомогательная функция для преобразования названий цветов в HEX
 function getColorHex(colorName: string): string {
   const colorMap: Record<string, string> = {
     'черный': '#000000',

@@ -4,11 +4,20 @@ import {
   removeFromWishlist,
   getWishlist
 } from '../controllers/wishlistController';
+import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
 
+// Все эндпоинты используют аутентификацию
+router.use(authenticate);
+
+// POST /api/wishlist - Добавить в избранное
 router.post('/', addToWishlist);
-router.delete('/', removeFromWishlist);
-router.get('/:userId', getWishlist);
+
+// DELETE /api/wishlist - Удалить из избранного
+router.delete('/:id', removeFromWishlist);
+
+// GET /api/wishlist - Получить избранное пользователя
+router.get('/', getWishlist);
 
 export default router;

@@ -24,19 +24,21 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
   const { isMobile } = useDevice();
   const dispatch = useAppDispatch();
   
   const { items: wishlistItems } = useAppSelector(state => state.wishlist);
   const userId = useAppSelector(selectCurrentUserId);
-  const isFavorite = wishlistItems.some(item => item.id === product.id);
+  const isFavorite = wishlistItems.some(item => item.id === String(product.id));
 
   useEffect(() => {
     if (productImages.length > 1 && !isHovered) {
       intervalRef.current = window.setInterval(() => {
         setCurrentImageIndex(prevIndex => (prevIndex + 1) % productImages.length);
-      }, 3000);
+      }, 300000);
     }
     return () => {
       if (intervalRef.current) {
@@ -69,22 +71,31 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
   };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!userId) {
-      console.warn('User not authenticated');
-      return;
-    }
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (!userId) {
+    setWishlistError('Please login to manage wishlist');
+    return;
+  }
 
-    try {
-      if (isFavorite) {
-        await dispatch(removeFromWishlist({ userId, productId: product.id })).unwrap();
-      } else {
-        await dispatch(addToWishlist({ userId, product })).unwrap();
-      }
-    } catch (error) {
-      console.error('Wishlist error:', error);
+  setWishlistLoading(true);
+  setWishlistError(null);
+
+  try {
+    if (isFavorite) {
+      await dispatch(removeFromWishlist(String(product.id))).unwrap();
+    } else {
+      await dispatch(addToWishlist(String(product.id))).unwrap();
     }
-  };
+  } catch (error) {
+    const err = error as Error;
+    setWishlistError(err.message || 'Wishlist operation failed');
+    console.error('Wishlist error:', error);
+  } finally {
+    setWishlistLoading(false);
+  }
+};
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -117,10 +128,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
             fill: isFavorite ? '#ef4444' : 'transparent'
           }}
           transition={{ duration: 0.2 }}
+          disabled={wishlistLoading}
+          title={wishlistError || (isFavorite ? 'Remove from wishlist' : 'Add to wishlist')}
         >
-          <FiHeart size={18} />
+          {wishlistLoading ? (
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+          ) : (
+            <FiHeart size={18} />
+          )}
         </motion.button>
         
+        {/* Остальной код мобильной версии остается без изменений */}
         <Link
           to={`/product/${product.id}`}
           className="flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800"
@@ -247,8 +265,14 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
           fill: isFavorite ? '#ef4444' : 'transparent'
         }}
         transition={{ duration: 0.2 }}
+        disabled={wishlistLoading}
+        title={wishlistError || (isFavorite ? 'Remove from wishlist' : 'Add to wishlist')}
       >
-        <FiHeart size={20} />
+        {wishlistLoading ? (
+          <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+        ) : (
+          <FiHeart size={20} />
+        )}
       </motion.button>
 
       {productDiscount > 0 && (

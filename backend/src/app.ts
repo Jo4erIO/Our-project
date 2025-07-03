@@ -2,50 +2,58 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes';
-import dotenv from 'dotenv';
 import cartRoutes from './routes/cartRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import './models/User';
+import './models/Product';
+import './models/Wishlist';
 
 dotenv.config();
 
 const app = express();
 
-
-// Подключаем парсинг JSON ПЕРВЫМ
-app.use(express.json()); // <-- ДОЛЖНО БЫТЬ ПЕРВЫМ
-
-// Затем CORS
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Затем логирование запросов (после парсинга JSON)
+// 1. Логирование запросов (первым)
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
-  if (Object.keys(req.body).length > 0) {
+  
+  // Безопасная проверка req.body
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
     console.log('Request body:', req.body);
   }
+  
   next();
 });
 
-// MongoDB
+// 2. CORS (вторым)
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
+
+// 3. Cookie Parser
+app.use(cookieParser());
+
+// 4. Парсинг JSON
+app.use(express.json());
+
+// 5. Роуты
+app.use('/auth', authRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+
+// MongoDB подключение
 mongoose.connect(process.env.MONGO_URI!)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ MongoDB error:', err));
 
-// Routes
-app.use('/auth', authRoutes);
-
-// Middleware для обработки ошибок
+// Middleware для обработки ошибок (последним)
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Server error:', err);
   res.status(500).json({ message: 'Internal server error' });
 });
-
-app.use('/api/cart', cartRoutes);
-app.use('/api/wishlist', wishlistRoutes);
 
 export default app;

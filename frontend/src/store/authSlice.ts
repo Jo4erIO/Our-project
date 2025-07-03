@@ -67,4 +67,5 @@ export const selectCurrentUserId = (state: { auth: AuthState }) => state.auth.us
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;
 
+
 export default authSlice.reducer;

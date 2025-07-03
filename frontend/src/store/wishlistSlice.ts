@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { WishlistApi } from '@/api/wishlistApi';
 import type { Product } from '@/types/Product';
+import axios from 'axios';
 
 interface WishlistItem {
   id: string;
@@ -10,52 +11,90 @@ interface WishlistItem {
   image: string;
   addedAt: string;
   discount?: number;
+  rating?: number;
+  colors?: string[];
 }
 
 interface WishlistState {
   items: WishlistItem[];
   loading: boolean;
   error: string | null;
+  lastUpdated: number | null;
 }
 
 const initialState: WishlistState = {
   items: [],
   loading: false,
-  error: null
+  error: null,
+  lastUpdated: null
 };
+
+// Функция для преобразования продукта в формат WishlistItem
+const productToWishlistItem = (product: any): WishlistItem => ({
+  id: product._id || product.id,
+  productId: product._id || product.id,
+  name: product.name,
+  price: product.price,
+  image: product.images?.[0] || '',
+  addedAt: new Date().toISOString(),
+  discount: product.discount,
+  rating: product.rating,
+  colors: product.colors
+});
 
 export const fetchWishlist = createAsyncThunk(
   'wishlist/fetchWishlist',
-  async (userId: string, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await WishlistApi.getWishlist(userId);
-      return response.data.products;
+      const response = await axios.get('/api/wishlist');
+      return response.data;
     } catch (error) {
-      return rejectWithValue('Failed to fetch wishlist');
+      if (axios.isAxiosError(error)) {
+        // Обработка 401 ошибки (неавторизован)
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+        }
+        return rejectWithValue(error.response?.data?.message || error.message);
+      }
+      return rejectWithValue('Unknown error');
     }
   }
 );
 
 export const addToWishlist = createAsyncThunk(
   'wishlist/addToWishlist',
-  async ({ userId, product }: { userId: string; product: Product }, { rejectWithValue }) => {
+  async (productId: string, { rejectWithValue }) => {
     try {
-      await WishlistApi.addToWishlist(userId, product.id);
-      return product;
+      const response = await WishlistApi.addToWishlist(productId);
+      return response.data.products;
     } catch (error) {
-      return rejectWithValue('Failed to add to wishlist');
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
+      return rejectWithValue(
+        axios.isAxiosError(error)
+          ? error.response?.data?.message || 'Failed to add to wishlist'
+          : 'Failed to add to wishlist'
+      );
     }
   }
 );
 
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/removeFromWishlist',
-  async ({ userId, productId }: { userId: string; productId: string }, { rejectWithValue }) => {
+  async (productId: string, { rejectWithValue }) => {
     try {
-      await WishlistApi.removeFromWishlist(userId, productId);
-      return productId;
+      const response = await WishlistApi.removeFromWishlist(productId);
+      return response.data.products;
     } catch (error) {
-      return rejectWithValue('Failed to remove from wishlist');
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
+      return rejectWithValue(
+        axios.isAxiosError(error)
+          ? error.response?.data?.message || 'Failed to remove from wishlist'
+          : 'Failed to remove from wishlist'
+      );
     }
   }
 );
@@ -63,7 +102,12 @@ export const removeFromWishlist = createAsyncThunk(
 const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState,
-  reducers: {},
+  reducers: {
+    clearWishlist: (state) => {
+      state.items = [];
+      state.lastUpdated = Date.now();
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchWishlist.pending, (state) => {
@@ -71,39 +115,46 @@ const wishlistSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchWishlist.fulfilled, (state, action) => {
-        state.items = action.payload.map((product: any) => ({
-          id: product._id,
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          image: product.images?.[0],
-          addedAt: new Date().toISOString(),
-          discount: product.discount
-        }));
+        state.items = (action.payload.products || []).map(productToWishlistItem);
         state.loading = false;
+        state.lastUpdated = Date.now();
       })
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
+      
+      .addCase(addToWishlist.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(addToWishlist.fulfilled, (state, action) => {
-        const product = action.payload;
-        if (!state.items.some(item => item.id === product.id)) {
-          state.items.push({
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.images[0],
-            addedAt: new Date().toISOString(),
-            discount: product.discount
-          });
-        }
+        // Исправлено: action.payload.products вместо action.payload
+        state.items = (action.payload.products || []).map(productToWishlistItem);
+        state.loading = false;
+        state.lastUpdated = Date.now();
+      })
+      .addCase(addToWishlist.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+      .addCase(removeFromWishlist.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(removeFromWishlist.fulfilled, (state, action) => {
-        state.items = state.items.filter(item => item.id !== action.payload);
+        // Исправлено: action.payload.products вместо action.payload
+        state.items = (action.payload.products || []).map(productToWishlistItem);
+        state.loading = false;
+        state.lastUpdated = Date.now();
+      })
+      .addCase(removeFromWishlist.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   }
 });
 
+export const { clearWishlist } = wishlistSlice.actions;
 export default wishlistSlice.reducer;

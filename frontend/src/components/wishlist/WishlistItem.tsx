@@ -7,12 +7,11 @@ import { motion } from 'framer-motion';
 
 interface Props {
   item: WishlistItemType;
-  userId: string;
   onAddToCart?: () => void;
   onRemove?: () => void;
 }
 
-export default function WishlistItem({ item, userId, onAddToCart, onRemove }: Props) {
+export default function WishlistItem({ item, onAddToCart, onRemove }: Props) {
   const dispatch = useAppDispatch();
 
   const handleAddToCart = () => {
@@ -31,7 +30,8 @@ export default function WishlistItem({ item, userId, onAddToCart, onRemove }: Pr
 
   const handleRemove = async () => {
     try {
-      await dispatch(removeFromWishlist({ userId, productId: item.id })).unwrap();
+      // Убрали userId, теперь передаем только ID продукта
+      await dispatch(removeFromWishlist(item.productId)).unwrap();
       onRemove?.();
     } catch (error) {
       console.error('Failed to remove:', error);
